@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user profile
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("[AuthContext] Fetching profile for user ID:", userId);
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
@@ -37,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
 
+      console.log("[AuthContext] Profile data retrieved:", profileData);
+      
       // Validate bundesland as a proper Bundesland type
       const bundesland = profileData.bundesland as Bundesland;
       
@@ -58,7 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Update session with user and profile
   const refreshSession = async (userId: string | undefined, email: string | undefined) => {
+    console.log("[AuthContext] Refreshing session for:", { userId, email });
+    
     if (!userId || !email) {
+      console.log("[AuthContext] No user ID or email, setting session to null");
       setSession({
         user: null,
         profile: null,
@@ -68,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const profile = await fetchProfile(userId);
+    console.log("[AuthContext] Profile fetched:", profile);
     
     setSession({
       user: {
@@ -77,29 +84,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile,
       isLoading: false,
     });
+    
+    console.log("[AuthContext] Session updated:", { 
+      userId, 
+      email, 
+      profile: profile ? "exists" : "null",
+      isLoading: false 
+    });
   };
 
   // Initialize session
   useEffect(() => {
     console.log("[AuthContext] Setting up auth state listener");
     
+    const handleAuthChange = async (event: string, sessionData: any) => {
+      console.log("[AuthContext] Auth state changed:", event);
+      await refreshSession(
+        sessionData?.user?.id, 
+        sessionData?.user?.email
+      );
+    };
+    
     // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("[AuthContext] Auth state changed:", event);
-        
-        await refreshSession(
-          session?.user?.id, 
-          session?.user?.email
-        );
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("[AuthContext] Initial session check:", 
+        currentSession ? "Session exists" : "No session");
+      
       refreshSession(
-        session?.user?.id, 
-        session?.user?.email
+        currentSession?.user?.id, 
+        currentSession?.user?.email
       );
     });
 

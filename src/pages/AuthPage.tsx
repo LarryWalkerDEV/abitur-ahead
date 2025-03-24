@@ -15,16 +15,28 @@ const AuthPage: React.FC = () => {
   // Redirect to ExamPage if user is already authenticated
   useEffect(() => {
     console.log("[AuthPage] Component mounted, checking authentication state", {
-      user: session.user,
+      user: session.user ? true : false,
       isLoading: session.isLoading
     });
     
-    if (session.user && !session.isLoading) {
-      console.log("[AuthPage] User already authenticated, redirecting to exam page");
-      navigate("/exam");
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.log("[AuthPage] Loading timeout reached, forcing evaluation");
+      if (!session.user) {
+        console.log("[AuthPage] No user after timeout, staying on auth page");
+      }
+    }, 5000);
+    
+    if (!session.isLoading) {
+      clearTimeout(loadingTimeout);
+      if (session.user) {
+        console.log("[AuthPage] User already authenticated, redirecting to exam page");
+        navigate("/exam");
+      }
     }
     
     return () => {
+      clearTimeout(loadingTimeout);
       console.log("[AuthPage] Component unmounted");
     };
   }, [session.user, session.isLoading, navigate]);

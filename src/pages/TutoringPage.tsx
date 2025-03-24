@@ -48,20 +48,31 @@ const TutoringPage: React.FC = () => {
 
   useEffect(() => {
     console.log("[TutoringPage] Component mounted", {
-      user: session.user,
+      user: session.user ? true : false,
       isLoading: session.isLoading
     });
     
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (session.isLoading) {
+        console.log("[TutoringPage] Loading timeout reached, forcing page to load");
+        setPageLoaded(true);
+      }
+    }, 5000);
+    
     // Check authentication state
     const checkAuth = async () => {
-      // Redirect to auth if not logged in
-      if (!session.isLoading && !session.user) {
-        console.log("[TutoringPage] User not authenticated, redirecting to auth page");
-        navigate("/auth");
-        return;
-      }
-      
-      if (!session.isLoading && session.user) {
+      if (!session.isLoading) {
+        // Clear timeout as we've loaded
+        clearTimeout(loadingTimeout);
+        
+        // Redirect to auth if not logged in
+        if (!session.user) {
+          console.log("[TutoringPage] User not authenticated, redirecting to auth page");
+          navigate("/auth");
+          return;
+        }
+        
         console.log("[TutoringPage] User authenticated, page loaded");
         setPageLoaded(true);
       }
@@ -70,6 +81,7 @@ const TutoringPage: React.FC = () => {
     checkAuth();
 
     return () => {
+      clearTimeout(loadingTimeout);
       console.log("[TutoringPage] Component unmounted");
     };
   }, [session.user, session.isLoading, navigate]);
@@ -152,7 +164,8 @@ const TutoringPage: React.FC = () => {
     }
   };
 
-  if (session.isLoading || !pageLoaded) {
+  if (session.isLoading && !pageLoaded) {
+    console.log("[TutoringPage] Showing loading screen");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

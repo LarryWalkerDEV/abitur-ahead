@@ -60,20 +60,31 @@ const ExamPage: React.FC = () => {
 
   useEffect(() => {
     console.log("[ExamPage] Component mounted, checking authentication", {
-      user: session.user,
+      user: session.user ? true : false,
       isLoading: session.isLoading
     });
     
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (session.isLoading) {
+        console.log("[ExamPage] Loading timeout reached, forcing page to load");
+        setPageLoaded(true);
+      }
+    }, 5000);
+    
     // Make sure we're setting loading state correctly
     const checkAuth = async () => {
-      // Redirect to auth if not logged in
-      if (!session.isLoading && !session.user) {
-        console.log("[ExamPage] User not authenticated, redirecting to auth page");
-        navigate("/auth");
-        return;
-      }
-      
-      if (!session.isLoading && session.user) {
+      if (!session.isLoading) {
+        // Clear timeout as we've loaded
+        clearTimeout(loadingTimeout);
+        
+        // Redirect to auth if not logged in
+        if (!session.user) {
+          console.log("[ExamPage] User not authenticated, redirecting to auth page");
+          navigate("/auth");
+          return;
+        }
+        
         console.log("[ExamPage] User authenticated, loading exams");
         
         // Fetch previous exams if we were to implement this functionality
@@ -97,6 +108,7 @@ const ExamPage: React.FC = () => {
     checkAuth();
 
     return () => {
+      clearTimeout(loadingTimeout);
       console.log("[ExamPage] Component unmounted");
     };
   }, [session.user, session.isLoading, navigate]);
@@ -139,7 +151,8 @@ const ExamPage: React.FC = () => {
   };
 
   // Show loading screen while checking auth or loading page data
-  if (session.isLoading || !pageLoaded) {
+  if (session.isLoading && !pageLoaded) {
+    console.log("[ExamPage] Showing loading screen");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
