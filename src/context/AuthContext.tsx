@@ -3,11 +3,11 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import type { UserSession, Profile } from "@/types/auth";
+import type { UserSession, Profile, Bundesland } from "@/types/auth";
 
 interface AuthContextType {
   session: UserSession;
-  signUp: (email: string, password: string, name: string, bundesland: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, bundesland: Bundesland) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user profile
   const fetchProfile = async (userId: string) => {
     try {
-      const { data: profile, error } = await supabase
+      const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
@@ -36,6 +36,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("[AuthContext] Error fetching profile:", error);
         return null;
       }
+
+      // Validate bundesland as a proper Bundesland type
+      const bundesland = profileData.bundesland as Bundesland;
+      
+      // Create properly typed profile
+      const profile: Profile = {
+        id: profileData.id,
+        name: profileData.name,
+        bundesland: bundesland,
+        subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired',
+        trial_end_date: profileData.trial_end_date
+      };
 
       return profile;
     } catch (error) {
@@ -97,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Sign up
-  const signUp = async (email: string, password: string, name: string, bundesland: string) => {
+  const signUp = async (email: string, password: string, name: string, bundesland: Bundesland) => {
     try {
       const { error } = await supabase.auth.signUp({
         email,
