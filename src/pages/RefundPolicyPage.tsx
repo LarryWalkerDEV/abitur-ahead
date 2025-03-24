@@ -1,6 +1,7 @@
 
 import React from 'react';
 import LegalNavigation from '@/components/layout/LegalNavigation';
+import { Link } from 'react-router-dom';
 
 const RefundPolicyPage: React.FC = () => {
   console.log('[RefundPolicyPage] Komponente gerendert');
@@ -10,6 +11,15 @@ const RefundPolicyPage: React.FC = () => {
       <LegalNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Link to="/" className="text-abitur-cyan hover:text-abitur-cyan/90 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Zurück zur Startseite
+          </Link>
+        </div>
+        
         <h1 className="text-3xl font-bold mb-8 text-abitur-pink">Rückerstattungsrichtlinie</h1>
         
         <div className="space-y-8 text-white/90">

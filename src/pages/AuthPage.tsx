@@ -13,13 +13,25 @@ const AuthPage: React.FC = () => {
 
   // Redirect to ExamPage if user is already authenticated
   useEffect(() => {
+    console.log("[AuthPage] Component mounted, checking authentication state");
+    
     if (session.user && !session.isLoading) {
       console.log("[AuthPage] User already authenticated, redirecting to exam page");
       navigate("/exam");
     }
+    
+    return () => {
+      console.log("[AuthPage] Component unmounted");
+    };
   }, [session.user, session.isLoading, navigate]);
 
+  const handleTabChange = (value: string) => {
+    console.log(`[AuthPage] Tab changed to ${value}`);
+    setActiveTab(value);
+  };
+
   if (session.isLoading) {
+    console.log("[AuthPage] Session is loading");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -47,7 +59,7 @@ const AuthPage: React.FC = () => {
           <Tabs 
             defaultValue="login" 
             value={activeTab} 
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             className="w-full"
           >
             <TabsList className="grid grid-cols-2 mb-6 w-full bg-abitur-dark">
@@ -72,7 +84,10 @@ const AuthPage: React.FC = () => {
               : "Bereits registriert?"}{" "}
             <button
               className="text-abitur-cyan hover:text-abitur-cyan/90 underline"
-              onClick={() => setActiveTab(activeTab === "login" ? "signup" : "login")}
+              onClick={() => {
+                console.log("[AuthPage] Toggle between login and signup");
+                handleTabChange(activeTab === "login" ? "signup" : "login");
+              }}
             >
               {activeTab === "login" ? "Jetzt registrieren" : "Jetzt anmelden"}
             </button>

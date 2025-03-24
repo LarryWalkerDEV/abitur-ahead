@@ -1,6 +1,7 @@
 
 import React from 'react';
 import LegalNavigation from '@/components/layout/LegalNavigation';
+import { Link } from 'react-router-dom';
 
 const TermsPage: React.FC = () => {
   console.log('[TermsPage] Komponente gerendert');
@@ -10,101 +11,127 @@ const TermsPage: React.FC = () => {
       <LegalNavigation />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Link to="/" className="text-abitur-cyan hover:text-abitur-cyan/90 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Zurück zur Startseite
+          </Link>
+        </div>
+        
         <h1 className="text-3xl font-bold mb-8 text-abitur-pink">Allgemeine Geschäftsbedingungen</h1>
         
         <div className="space-y-8 text-white/90">
           <section>
             <h2 className="text-xl font-semibold mb-4">1. Allgemeines</h2>
             <p>
-              Diese Allgemeinen Geschäftsbedingungen (AGB) regeln die Nutzung der von Apex AI Research Labs LLC (im Folgenden "Abitur.ai", "wir" oder "uns") bereitgestellten Dienstleistungen.
+              Diese Allgemeinen Geschäftsbedingungen ("AGB") regeln die Nutzung der von Apex AI Research Labs LLC ("wir", "uns", "Abitur.ai") bereitgestellten Dienste, zugänglich über die Website abitur.ai und alle damit verbundenen Domains (der "Service").
+            </p>
+            <p className="mt-2">
+              Durch die Nutzung unseres Services erklären Sie sich mit diesen AGB einverstanden. Bitte lesen Sie diese sorgfältig durch.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">2. Vertragsschluss und Leistungsumfang</h2>
+            <h2 className="text-xl font-semibold mb-4">2. Beschreibung des Services</h2>
             <p>
-              Mit der Registrierung auf unserer Plattform kommt ein Nutzungsvertrag zwischen Ihnen und Abitur.ai zustande. Wir bieten Ihnen Zugang zu einer KI-gestützten Lernplattform zur Vorbereitung auf das Abitur.
+              Abitur.ai ist eine Lernplattform, die KI-gestützte Prüfungsvorbereitungsmaterialien und personalisierte Tutoring-Dienste für Abiturienten in Deutschland anbietet.
             </p>
             <p className="mt-2">
-              Unsere Leistungen umfassen:
+              Unsere Dienste umfassen:
             </p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Personalisierte Abiturprüfungen und Übungsaufgaben</li>
-              <li>KI-gestützte Tutoring-Funktionen</li>
-              <li>Lernmaterialien und Erklärungen</li>
-              <li>Fortschrittsverfolgung und Analysen</li>
+              <li>Generierung von Übungsprüfungen basierend auf vergangenen Abiturprüfungen</li>
+              <li>KI-gestütztes Tutoring und Hilfestellung bei Fragen</li>
+              <li>Personalisierte Lernpläne basierend auf dem Bundesland des Nutzers</li>
             </ul>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">3. Abonnement und Zahlungsbedingungen</h2>
+            <h2 className="text-xl font-semibold mb-4">3. Nutzungsbedingungen</h2>
+            <h3 className="text-lg font-medium mt-4 mb-2">3.1 Registrierung</h3>
             <p>
-              Nach Ablauf der kostenlosen Testphase von 3 Tagen bieten wir ein Halbjahresabonnement für 49 Euro an.
+              Um unseren Service nutzen zu können, müssen Sie sich registrieren und ein Benutzerkonto erstellen. Sie sind verpflichtet, genaue, aktuelle und vollständige Informationen während des Registrierungsprozesses anzugeben und diese Informationen aktuell zu halten.
             </p>
-            <p className="mt-2">
-              Das Abonnement verlängert sich nicht automatisch und endet nach Ablauf des Zeitraums. Eine Kündigung ist nicht erforderlich.
-            </p>
-            <p className="mt-2">
-              Die Zahlungsabwicklung erfolgt über unseren Zahlungsdienstleister Paddle.
-            </p>
-          </section>
-          
-          <section>
-            <h2 className="text-xl font-semibold mb-4">4. Nutzungsbedingungen</h2>
+            
+            <h3 className="text-lg font-medium mt-4 mb-2">3.2 Kontosicherheit</h3>
             <p>
-              Als Nutzer verpflichten Sie sich:
+              Sie sind für die Wahrung der Vertraulichkeit Ihres Kontos und Passworts verantwortlich und für die Einschränkung des Zugriffs auf Ihren Computer. Sie stimmen zu, die Verantwortung für alle Aktivitäten zu übernehmen, die unter Ihrem Konto oder Passwort stattfinden.
+            </p>
+            
+            <h3 className="text-lg font-medium mt-4 mb-2">3.3 Zulässige Nutzung</h3>
+            <p>
+              Sie dürfen den Service nur für rechtmäßige Zwecke und in Übereinstimmung mit diesen AGB nutzen. Sie verpflichten sich, den Service nicht zu verwenden:
             </p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Die Plattform nur für Ihre persönliche Lernvorbereitung zu nutzen</li>
-              <li>Keine rechtswidrigen oder anstößigen Inhalte hochzuladen oder zu teilen</li>
-              <li>Ihr Konto und Ihre Zugangsdaten sicher zu verwahren</li>
-              <li>Die Plattform nicht in einer Weise zu nutzen, die die Funktionalität beeinträchtigt</li>
-              <li>Keine Urheberrechte oder andere Schutzrechte zu verletzen</li>
+              <li>In einer Weise, die gegen geltende Gesetze oder Vorschriften verstößt</li>
+              <li>Um Material zu übermitteln, das schädlich, beleidigend, betrügerisch oder anderweitig anstößig ist</li>
+              <li>Um sich an unerwünschter Werbung oder anderen Formen von unautorisierter Kommunikation zu beteiligen</li>
+              <li>Um sich als eine andere Person oder Einheit auszugeben</li>
+              <li>Um Viren oder anderen schädlichen Code zu übertragen</li>
             </ul>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">5. Gewährleistung und Haftung</h2>
+            <h2 className="text-xl font-semibold mb-4">4. Abonnements und Zahlungen</h2>
+            <h3 className="text-lg font-medium mt-4 mb-2">4.1 Preisgestaltung</h3>
             <p>
-              Wir bemühen uns, eine hohe Qualität und Verfügbarkeit unserer Dienste sicherzustellen, können jedoch keine ununterbrochene oder fehlerfreie Bereitstellung garantieren.
+              Wir bieten eine kostenlose 3-tägige Testphase an, nach deren Ablauf Sie ein 6-monatiges Abonnement für 49 € erwerben können. Die Preise sind in Euro angegeben und beinhalten alle anwendbaren Steuern.
+            </p>
+            
+            <h3 className="text-lg font-medium mt-4 mb-2">4.2 Zahlungsbedingungen</h3>
+            <p>
+              Wir akzeptieren verschiedene Zahlungsmethoden, die auf unserer Website angezeigt werden. Die Zahlung wird vor Beginn des Abonnementzeitraums in Rechnung gestellt. Das Abonnement verlängert sich nicht automatisch.
+            </p>
+            
+            <h3 className="text-lg font-medium mt-4 mb-2">4.3 Rückerstattungen</h3>
+            <p>
+              Bitte beachten Sie unsere separate Rückerstattungsrichtlinie für Informationen über Rückerstattungen und Stornierungen.
+            </p>
+          </section>
+          
+          <section>
+            <h2 className="text-xl font-semibold mb-4">5. Geistiges Eigentum</h2>
+            <p>
+              Der Service und seine ursprünglichen Inhalte, Funktionen und Funktionalität sind und bleiben das ausschließliche Eigentum von Abitur.ai und seinen Lizenzgebern. Der Service ist durch Urheberrecht, Markenrecht und andere Gesetze geschützt.
             </p>
             <p className="mt-2">
-              Unsere Haftung ist auf Vorsatz und grobe Fahrlässigkeit beschränkt, soweit gesetzlich zulässig.
+              Die von unserer Plattform generierten Inhalte dürfen ausschließlich für Ihren persönlichen, nicht-kommerziellen Gebrauch verwendet werden.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">6. Datenschutz</h2>
+            <h2 className="text-xl font-semibold mb-4">6. Haftungsbeschränkung</h2>
             <p>
-              Der Schutz Ihrer Daten liegt uns am Herzen. Informationen zur Verarbeitung Ihrer personenbezogenen Daten finden Sie in unserer Datenschutzerklärung.
+              In keinem Fall haftet Abitur.ai für indirekte, zufällige, besondere, Folge- oder Strafschäden, einschließlich, aber nicht beschränkt auf entgangenen Gewinn, Datenverlust, Ersatzkosten oder andere immaterielle Verluste, die aus Ihrer Nutzung oder Unfähigkeit zur Nutzung des Services resultieren.
+            </p>
+            <p className="mt-2">
+              Obwohl wir uns bemühen, akkurate und qualitativ hochwertige Inhalte zu liefern, übernehmen wir keine Garantie für die Vollständigkeit, Richtigkeit oder Zuverlässigkeit der von unserem Service generierten Inhalte.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">7. Rückerstattung</h2>
+            <h2 className="text-xl font-semibold mb-4">7. Änderungen der AGB</h2>
             <p>
-              Nach Ablauf der kostenlosen Testphase und Zahlung des Abonnements besteht kein Anspruch auf Rückerstattung. Während der Testphase können Sie jederzeit kündigen.
+              Wir behalten uns das Recht vor, diese AGB jederzeit zu ändern oder zu ersetzen. Die aktuellste Version wird stets auf unserer Website verfügbar sein. Es liegt in Ihrer Verantwortung, die AGB regelmäßig auf Änderungen zu überprüfen.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">8. Laufzeit und Kündigung</h2>
+            <h2 className="text-xl font-semibold mb-4">8. Anwendbares Recht</h2>
             <p>
-              Das Abonnement endet automatisch nach 6 Monaten und muss nicht gekündigt werden. Wir behalten uns das Recht vor, Ihr Konto bei Verstoß gegen diese AGB zu sperren oder zu löschen.
+              Diese AGB unterliegen den Gesetzen des Staates Wyoming, USA, ohne Berücksichtigung von Kollisionsnormen.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-4">9. Anwendbares Recht</h2>
+            <h2 className="text-xl font-semibold mb-4">9. Kontakt</h2>
             <p>
-              Es gilt das Recht der Vereinigten Staaten von Amerika unter Ausschluss des UN-Kaufrechts. Für Verbraucher aus der EU gelten zusätzlich die zwingenden Verbraucherschutzbestimmungen ihres Wohnsitzstaates.
+              Bei Fragen zu diesen AGB kontaktieren Sie uns bitte unter:
             </p>
-          </section>
-          
-          <section>
-            <h2 className="text-xl font-semibold mb-4">10. Änderungen der AGB</h2>
-            <p>
-              Wir behalten uns das Recht vor, diese AGB jederzeit zu ändern. Die aktuellen AGB sind stets auf unserer Website einsehbar.
+            <p className="mt-2">
+              E-Mail: info@abitur.ai
             </p>
           </section>
         </div>

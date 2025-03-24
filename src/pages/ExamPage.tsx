@@ -69,8 +69,17 @@ const ExamPage: React.FC = () => {
     // Fetch previous exams if we were to implement this functionality
     const fetchPreviousExams = async () => {
       console.log("[ExamPage] Frühere Prüfungen werden abgerufen");
-      // This would be implemented with a Supabase query
-      setPreviousExams([]);
+      try {
+        // This would be implemented with a Supabase query
+        setPreviousExams([]);
+      } catch (error) {
+        console.error("[ExamPage] Fehler beim Abrufen früherer Prüfungen:", error);
+        toast({
+          title: "Fehler",
+          description: "Frühere Prüfungen konnten nicht geladen werden",
+          variant: "destructive",
+        });
+      }
     };
 
     if (session.user) {

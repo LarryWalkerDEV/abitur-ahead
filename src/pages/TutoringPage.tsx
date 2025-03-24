@@ -64,14 +64,23 @@ const TutoringPage: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("[TutoringPage] Dateien ausgewählt:", e.target.files);
     if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files).map(file => ({
-        id: Math.random().toString(36).substring(2, 9),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        file
-      }));
-      setAttachments(prev => [...prev, ...newFiles]);
+      try {
+        const newFiles = Array.from(e.target.files).map(file => ({
+          id: Math.random().toString(36).substring(2, 9),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          file
+        }));
+        setAttachments(prev => [...prev, ...newFiles]);
+      } catch (error) {
+        console.error("[TutoringPage] Fehler beim Verarbeiten der Dateien:", error);
+        toast({
+          title: "Fehler beim Hochladen",
+          description: "Die ausgewählten Dateien konnten nicht verarbeitet werden.",
+          variant: "destructive",
+        });
+      }
     }
     // Reset file input
     if (fileInputRef.current) {

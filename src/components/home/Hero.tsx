@@ -18,7 +18,7 @@ const Hero: React.FC = () => {
   }, []);
 
   const handleCtaClick = () => {
-    console.log('[Hero] CTA-Button geklickt');
+    console.log('[Hero] CTA-Button "Jetzt kostenlos testen" geklickt');
     
     if (session.user) {
       console.log('[Hero] Benutzer ist angemeldet, Weiterleitung zur Exam-Seite');
@@ -26,6 +26,15 @@ const Hero: React.FC = () => {
     } else {
       console.log('[Hero] Benutzer ist nicht angemeldet, Weiterleitung zur Auth-Seite');
       navigate('/auth');
+    }
+  };
+
+  const handleMoreInfoClick = () => {
+    console.log('[Hero] "Mehr erfahren" Button geklickt');
+    // Scroll to FAQ section
+    const faqSection = document.getElementById('faq-section');
+    if (faqSection) {
+      faqSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -107,10 +116,7 @@ const Hero: React.FC = () => {
             </Button>
             <Button variant="outline" 
                     className="border-white/20 hover:bg-white/5 text-white px-8 py-6 rounded-md font-semibold text-lg"
-                    onClick={() => {
-                      console.log('[Hero] "Mehr erfahren" Button geklickt');
-                      // Scroll to FAQ section or navigate to a details page
-                    }}>
+                    onClick={handleMoreInfoClick}>
               Mehr erfahren
             </Button>
           </div>
