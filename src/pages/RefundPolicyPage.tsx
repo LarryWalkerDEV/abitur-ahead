@@ -1,73 +1,90 @@
 
-import React, { useEffect } from "react";
-import Footer from "@/components/layout/Footer";
-import LegalNavigation from "@/components/layout/LegalNavigation";
+import React from 'react';
+import LegalNavigation from '@/components/layout/LegalNavigation';
 
 const RefundPolicyPage: React.FC = () => {
-  useEffect(() => {
-    console.log("[RefundPolicyPage] Komponente montiert");
-    return () => {
-      console.log("[RefundPolicyPage] Komponente demontiert");
-    };
-  }, []);
-
+  console.log('[RefundPolicyPage] Komponente gerendert');
+  
   return (
-    <div className="min-h-screen bg-abitur-dark">
+    <div className="bg-abitur-dark min-h-screen text-white">
       <LegalNavigation />
-      <div className="container px-4 py-16 mx-auto">
-        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Rückerstattungsrichtlinie</h1>
+      
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 className="text-3xl font-bold mb-8 text-abitur-pink">Rückerstattungsrichtlinie</h1>
         
-        <div className="prose prose-invert max-w-none">
-          <p className="mb-6">
-            Letzte Aktualisierung: 01.06.2024
-          </p>
+        <div className="space-y-8 text-white/90">
+          <section>
+            <h2 className="text-xl font-semibold mb-4">1. Kostenlose Testphase</h2>
+            <p>
+              Abitur.ai bietet eine kostenlose Testphase von 3 Tagen an. Während dieser Zeit können Sie alle Funktionen unserer Plattform ohne Verpflichtung nutzen.
+            </p>
+            <p className="mt-2">
+              Die Testphase endet automatisch und geht nicht in ein kostenpflichtiges Abonnement über.
+            </p>
+          </section>
           
-          <h2 className="text-2xl font-semibold mb-4 mt-8">1. Allgemeine Informationen</h2>
-          <p className="mb-4">
-            Diese Rückerstattungsrichtlinie regelt die Bedingungen, unter denen Nutzer der Dienstleistungen von Abitur.ai eine Rückerstattung ihrer Zahlungen beantragen können. Wir sind bestrebt, unseren Kunden einen fairen und transparenten Umgang mit Rückerstattungen zu bieten.
-          </p>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">2. Abonnementgebühren</h2>
+            <p>
+              Nach Ablauf der kostenlosen Testphase können Sie ein Halbjahresabonnement für 49 Euro erwerben.
+            </p>
+            <p className="mt-2">
+              Das Abonnement hat eine feste Laufzeit von 6 Monaten und verlängert sich nicht automatisch.
+            </p>
+          </section>
           
-          <h2 className="text-2xl font-semibold mb-4 mt-8">2. Kostenlose Testphase</h2>
-          <p className="mb-4">
-            2.1 Neue Nutzer haben Zugang zu einer 3-tägigen kostenlosen Testphase, wie auf unserer Website angegeben.
-          </p>
-          <p className="mb-4">
-            2.2 Während der kostenlosen Testphase fallen keine Kosten an, daher sind für diesen Zeitraum keine Rückerstattungen möglich.
-          </p>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">3. Rückerstattungsbedingungen</h2>
+            <p>
+              Nach dem Kauf eines Abonnements und Zahlung der Gebühr besteht grundsätzlich kein Anspruch auf Rückerstattung.
+            </p>
+            <p className="mt-2">
+              Da wir eine kostenlose Testphase anbieten, haben Sie die Möglichkeit, unsere Dienste vor dem Kauf ausführlich zu testen.
+            </p>
+          </section>
           
-          <h2 className="text-2xl font-semibold mb-4 mt-8">3. Abonnementkosten und Laufzeit</h2>
-          <p className="mb-4">
-            3.1 Nach Ablauf der kostenlosen Testphase beträgt der Preis für ein Halbjahresabonnement 49 Euro.
-          </p>
-          <p className="mb-4">
-            3.2 Das Abonnement hat eine Laufzeit von 6 Monaten und endet automatisch ohne Verlängerung.
-          </p>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">4. Ausnahmen</h2>
+            <p>
+              In folgenden Fällen können wir nach eigenem Ermessen eine Rückerstattung in Betracht ziehen:
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Technische Probleme, die die Nutzung der Plattform über einen längeren Zeitraum unmöglich machen und die wir nicht beheben können</li>
+              <li>Versehentliche doppelte Zahlung</li>
+              <li>Gesetzlich vorgeschriebene Widerrufsrechte, sofern anwendbar</li>
+            </ul>
+          </section>
           
-          <h2 className="text-2xl font-semibold mb-4 mt-8">4. Rückerstattungsbedingungen</h2>
-          <p className="mb-4">
-            4.1 Nach dem Kauf eines Abonnements werden keine Rückerstattungen gewährt, es sei denn, es liegt ein schwerwiegender technischer Fehler vor, der die Nutzung der Dienstleistung unmöglich macht.
-          </p>
-          <p className="mb-4">
-            4.2 Wir empfehlen daher, die kostenlose Testphase zu nutzen, um die Dienstleistung ausgiebig zu testen, bevor ein kostenpflichtiges Abonnement abgeschlossen wird.
-          </p>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">5. Anfragen zur Rückerstattung</h2>
+            <p>
+              Sollten Sie der Meinung sein, dass ein Anspruch auf Rückerstattung besteht, kontaktieren Sie uns bitte unter:
+            </p>
+            <p className="mt-2">
+              E-Mail: info@abitur.ai
+            </p>
+            <p className="mt-2">
+              Bitte geben Sie dabei folgende Informationen an:
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Ihre E-Mail-Adresse, mit der Sie registriert sind</li>
+              <li>Datum der Zahlung</li>
+              <li>Grund für die Rückerstattungsanfrage</li>
+            </ul>
+          </section>
           
-          <h2 className="text-2xl font-semibold mb-4 mt-8">5. Ausnahmen</h2>
-          <p className="mb-4">
-            5.1 In Ausnahmefällen können Rückerstattungen unter folgenden Umständen gewährt werden:
-          </p>
-          <ul className="list-disc pl-6 mb-4">
-            <li>Nachweisbare technische Probleme, die die Nutzung der Dienstleistung erheblich beeinträchtigen und nicht innerhalb einer angemessenen Frist behoben werden können</li>
-            <li>Fehlerhafte Abrechnung oder Doppelbelastungen</li>
-          </ul>
-          
-          <h2 className="text-2xl font-semibold mb-4 mt-8">6. Kontakt</h2>
-          <p className="mb-4">
-            Bei Fragen zur Rückerstattungsrichtlinie kontaktiere uns bitte unter info@abitur.ai.
-          </p>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">6. Bearbeitungszeit</h2>
+            <p>
+              Wir bemühen uns, Rückerstattungsanfragen innerhalb von 14 Tagen zu bearbeiten. Die tatsächliche Gutschrift auf Ihrem Konto kann je nach Zahlungsmethode und Bank weitere Zeit in Anspruch nehmen.
+            </p>
+          </section>
+        </div>
+        
+        <div className="mt-12 text-sm text-white/70">
+          <p>Letzte Aktualisierung: 9. November 2023</p>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };
