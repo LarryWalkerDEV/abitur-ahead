@@ -3,6 +3,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
+  console.log('[Footer] Komponente gerendert');
+  
   return (
     <footer className="w-full py-12 bg-abitur-darker">
       <div className="container px-4 md:px-6">

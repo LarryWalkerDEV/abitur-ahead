@@ -3,8 +3,13 @@ import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import AnimatedBadge from '@/components/ui/AnimatedBadge';
 import StarElement from '@/components/ui/StarElement';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
+  const { session } = useAuth();
+  
   useEffect(() => {
     console.log('[Hero] Komponente montiert');
     return () => {
@@ -14,7 +19,14 @@ const Hero: React.FC = () => {
 
   const handleCtaClick = () => {
     console.log('[Hero] CTA-Button geklickt');
-    // Navigation logic here
+    
+    if (session.user) {
+      console.log('[Hero] Benutzer ist angemeldet, Weiterleitung zur Exam-Seite');
+      navigate('/exam');
+    } else {
+      console.log('[Hero] Benutzer ist nicht angemeldet, Weiterleitung zur Auth-Seite');
+      navigate('/auth');
+    }
   };
 
   return (
@@ -93,7 +105,12 @@ const Hero: React.FC = () => {
                     onClick={handleCtaClick}>
               Jetzt kostenlos testen
             </Button>
-            <Button variant="outline" className="border-white/20 hover:bg-white/5 text-white px-8 py-6 rounded-md font-semibold text-lg">
+            <Button variant="outline" 
+                    className="border-white/20 hover:bg-white/5 text-white px-8 py-6 rounded-md font-semibold text-lg"
+                    onClick={() => {
+                      console.log('[Hero] "Mehr erfahren" Button geklickt');
+                      // Scroll to FAQ section or navigate to a details page
+                    }}>
               Mehr erfahren
             </Button>
           </div>
