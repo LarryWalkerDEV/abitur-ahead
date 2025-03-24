@@ -171,7 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Willkommen zurück!",
       });
       
-      navigate("/");
+      // Redirect to exam page after successful login
+      navigate("/exam");
     } catch (error) {
       console.error("[AuthContext] Sign in exception:", error);
       toast({

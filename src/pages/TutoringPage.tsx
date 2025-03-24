@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -44,20 +43,34 @@ const TutoringPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log("[TutoringPage] Komponente montiert");
+    console.log("[TutoringPage] Component mounted", {
+      user: session.user,
+      isLoading: session.isLoading
+    });
     
-    // Redirect to auth if not logged in
-    if (!session.isLoading && !session.user) {
-      console.log("[TutoringPage] Benutzer nicht angemeldet, Weiterleitung zur Auth-Seite");
-      navigate("/auth");
-      return;
-    }
+    // Check authentication state
+    const checkAuth = async () => {
+      // Redirect to auth if not logged in
+      if (!session.isLoading && !session.user) {
+        console.log("[TutoringPage] User not authenticated, redirecting to auth page");
+        navigate("/auth");
+        return;
+      }
+      
+      if (!session.isLoading && session.user) {
+        console.log("[TutoringPage] User authenticated, page loaded");
+        setPageLoaded(true);
+      }
+    };
+    
+    checkAuth();
 
     return () => {
-      console.log("[TutoringPage] Komponente demontiert");
+      console.log("[TutoringPage] Component unmounted");
     };
   }, [session.user, session.isLoading, navigate]);
 
@@ -139,7 +152,7 @@ const TutoringPage: React.FC = () => {
     }
   };
 
-  if (session.isLoading) {
+  if (session.isLoading || !pageLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
