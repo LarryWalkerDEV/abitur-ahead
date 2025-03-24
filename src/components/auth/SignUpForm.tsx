@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import BundeslandSelector from "./BundeslandSelector";
 import { useAuth } from "@/context/AuthContext";
+import { type Bundesland } from "@/types/auth";
 
 const signUpSchema = z.object({
   name: z.string().min(2, {
@@ -21,7 +22,7 @@ const signUpSchema = z.object({
   }),
   bundesland: z.string().min(1, {
     message: "Bitte wähle dein Bundesland aus",
-  }),
+  }) as z.ZodType<Bundesland>, // Cast to ensure type safety
 });
 
 type SignUpValues = z.infer<typeof signUpSchema>;
@@ -49,7 +50,7 @@ const SignUpForm: React.FC = () => {
         values.email,
         values.password,
         values.name,
-        values.bundesland
+        values.bundesland as Bundesland // Type assertion here
       );
     } finally {
       setIsSubmitting(false);
