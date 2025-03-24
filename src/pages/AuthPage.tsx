@@ -5,6 +5,7 @@ import SignUpForm from "@/components/auth/SignUpForm";
 import LoginForm from "@/components/auth/LoginForm";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import BackToHomeLink from "@/components/layout/BackToHomeLink";
 
 const AuthPage: React.FC = () => {
   const { session } = useAuth();
@@ -13,7 +14,10 @@ const AuthPage: React.FC = () => {
 
   // Redirect to ExamPage if user is already authenticated
   useEffect(() => {
-    console.log("[AuthPage] Component mounted, checking authentication state");
+    console.log("[AuthPage] Component mounted, checking authentication state", {
+      user: session.user,
+      isLoading: session.isLoading
+    });
     
     if (session.user && !session.isLoading) {
       console.log("[AuthPage] User already authenticated, redirecting to exam page");
@@ -44,6 +48,10 @@ const AuthPage: React.FC = () => {
   return (
     <div className="abitur-grid-bg min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
+        <div className="absolute top-4 left-4">
+          <BackToHomeLink />
+        </div>
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-abitur-pink mb-2">
             {activeTab === "login" ? "Willkommen zurück!" : "Erstelle deinen Account"}

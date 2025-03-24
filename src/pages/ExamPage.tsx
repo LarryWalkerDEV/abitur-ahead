@@ -30,6 +30,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "@/hooks/use-toast";
+import BackToHomeLink from "@/components/layout/BackToHomeLink";
 
 const examSchema = z.object({
   subject: z.string().min(1, {
@@ -47,6 +48,7 @@ const ExamPage: React.FC = () => {
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [previousExams, setPreviousExams] = useState<any[]>([]);
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   const form = useForm<ExamValues>({
     resolver: zodResolver(examSchema),
@@ -57,34 +59,39 @@ const ExamPage: React.FC = () => {
   });
 
   useEffect(() => {
-    console.log("[ExamPage] Komponente montiert");
+    console.log("[ExamPage] Komponente montiert, checking authentication");
     
-    // Redirect to auth if not logged in
-    if (!session.isLoading && !session.user) {
-      console.log("[ExamPage] Benutzer nicht angemeldet, Weiterleitung zur Auth-Seite");
-      navigate("/auth");
-      return;
-    }
-
-    // Fetch previous exams if we were to implement this functionality
-    const fetchPreviousExams = async () => {
-      console.log("[ExamPage] Frühere Prüfungen werden abgerufen");
-      try {
-        // This would be implemented with a Supabase query
-        setPreviousExams([]);
-      } catch (error) {
-        console.error("[ExamPage] Fehler beim Abrufen früherer Prüfungen:", error);
-        toast({
-          title: "Fehler",
-          description: "Frühere Prüfungen konnten nicht geladen werden",
-          variant: "destructive",
-        });
+    // Make sure we're setting loading state correctly
+    const checkAuth = async () => {
+      // Redirect to auth if not logged in
+      if (!session.isLoading && !session.user) {
+        console.log("[ExamPage] Benutzer nicht angemeldet, Weiterleitung zur Auth-Seite");
+        navigate("/auth");
+        return;
+      }
+      
+      if (!session.isLoading && session.user) {
+        console.log("[ExamPage] Benutzer angemeldet, Laden der Prüfungen");
+        
+        // Fetch previous exams if we were to implement this functionality
+        try {
+          // This would be implemented with a Supabase query
+          setPreviousExams([]);
+          console.log("[ExamPage] Frühere Prüfungen erfolgreich geladen");
+        } catch (error) {
+          console.error("[ExamPage] Fehler beim Abrufen früherer Prüfungen:", error);
+          toast({
+            title: "Fehler",
+            description: "Frühere Prüfungen konnten nicht geladen werden",
+            variant: "destructive",
+          });
+        } finally {
+          setPageLoaded(true);
+        }
       }
     };
 
-    if (session.user) {
-      fetchPreviousExams();
-    }
+    checkAuth();
 
     return () => {
       console.log("[ExamPage] Komponente demontiert");
@@ -128,7 +135,8 @@ const ExamPage: React.FC = () => {
     }
   };
 
-  if (session.isLoading) {
+  // Show loading screen while checking auth or loading page data
+  if (session.isLoading || !pageLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
