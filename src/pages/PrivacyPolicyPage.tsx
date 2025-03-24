@@ -1,6 +1,7 @@
 
 import React, { useEffect } from "react";
 import Footer from "@/components/layout/Footer";
+import LegalNavigation from "@/components/layout/LegalNavigation";
 
 const PrivacyPolicyPage: React.FC = () => {
   useEffect(() => {
@@ -12,12 +13,13 @@ const PrivacyPolicyPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-abitur-dark">
+      <LegalNavigation />
       <div className="container px-4 py-16 mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Datenschutzerklärung</h1>
         
         <div className="prose prose-invert max-w-none">
           <p className="mb-6">
-            Letzte Aktualisierung: 01.03.2024
+            Letzte Aktualisierung: 01.06.2024
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">1. Einleitung</h2>
@@ -30,11 +32,11 @@ const PrivacyPolicyPage: React.FC = () => {
             Verantwortlich für die Datenverarbeitung auf dieser Website im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:
           </p>
           <p className="mb-4">
-            Abitur.ai GmbH<br />
-            Musterstraße 123<br />
-            10115 Berlin<br />
-            Deutschland<br />
-            E-Mail: datenschutz@abitur.ai
+            Apex AI Research Labs LLC<br />
+            1309 Coffeen Avenue STE 1200<br />
+            Sheridan Wyoming 82801<br />
+            USA<br />
+            E-Mail: info@abitur.ai
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">3. Arten der verarbeiteten Daten</h2>
@@ -80,7 +82,7 @@ const PrivacyPolicyPage: React.FC = () => {
 
           <h2 className="text-2xl font-semibold mb-4 mt-8">7. Kontakt</h2>
           <p className="mb-4">
-            Bei Fragen zum Datenschutz kontaktiere uns bitte unter datenschutz@abitur.ai.
+            Bei Fragen zum Datenschutz kontaktiere uns bitte unter info@abitur.ai.
           </p>
         </div>
       </div>

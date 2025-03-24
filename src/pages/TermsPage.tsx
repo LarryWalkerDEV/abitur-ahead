@@ -1,6 +1,7 @@
 
 import React, { useEffect } from "react";
 import Footer from "@/components/layout/Footer";
+import LegalNavigation from "@/components/layout/LegalNavigation";
 
 const TermsPage: React.FC = () => {
   useEffect(() => {
@@ -12,17 +13,18 @@ const TermsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-abitur-dark">
+      <LegalNavigation />
       <div className="container px-4 py-16 mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Allgemeine Geschäftsbedingungen (AGB)</h1>
         
         <div className="prose prose-invert max-w-none">
           <p className="mb-6">
-            Letzte Aktualisierung: 01.03.2024
+            Letzte Aktualisierung: 01.06.2024
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">1. Geltungsbereich</h2>
           <p className="mb-4">
-            Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge zwischen der Abitur.ai GmbH (im Folgenden "Anbieter") und den Nutzern (im Folgenden "Nutzer") der Dienstleistungen und Services der Webseite abitur.ai.
+            Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge zwischen der Apex AI Research Labs LLC (im Folgenden "Anbieter") und den Nutzern (im Folgenden "Nutzer") der Dienstleistungen und Services der Webseite abitur.ai.
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">2. Vertragsgegenstand</h2>
@@ -43,7 +45,10 @@ const TermsPage: React.FC = () => {
             4.1 Der Umfang der angebotenen Dienstleistungen und die dafür anfallenden Gebühren ergeben sich aus der Leistungsbeschreibung auf der Webseite zum Zeitpunkt der Bestellung.
           </p>
           <p className="mb-4">
-            4.2 Sofern nicht anders angegeben, verstehen sich alle Preisangaben inklusive der gesetzlichen Mehrwertsteuer.
+            4.2 Die Nutzung beginnt mit einer 3-tägigen kostenlosen Testphase. Nach Ablauf der Testphase beträgt der Preis für ein Halbjahresabonnement 49 Euro. Es erfolgt keine automatische Verlängerung des Abonnements.
+          </p>
+          <p className="mb-4">
+            4.3 Sofern nicht anders angegeben, verstehen sich alle Preisangaben inklusive der gesetzlichen Mehrwertsteuer.
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">5. Zahlungsbedingungen</h2>
@@ -56,10 +61,10 @@ const TermsPage: React.FC = () => {
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">6. Vertragslaufzeit und Kündigung</h2>
           <p className="mb-4">
-            6.1 Die Laufzeit des Vertrages richtet sich nach dem gewählten Abonnement oder der gebuchten Dienstleistung.
+            6.1 Die Laufzeit des Vertrages richtet sich nach dem gewählten Abonnement. Die Laufzeit beträgt 6 Monate und endet automatisch ohne Verlängerung.
           </p>
           <p className="mb-4">
-            6.2 Die Kündigung muss schriftlich oder über das Benutzerkonto erfolgen. Die Kündigungsfrist beträgt 14 Tage zum Ende der Vertragslaufzeit.
+            6.2 Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">7. Pflichten des Nutzers</h2>

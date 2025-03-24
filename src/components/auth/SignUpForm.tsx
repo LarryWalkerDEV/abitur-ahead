@@ -37,7 +37,7 @@ const SignUpForm: React.FC = () => {
       name: "",
       email: "",
       password: "",
-      bundesland: "Bayern",
+      bundesland: "Bayern" as Bundesland,
     },
   });
 

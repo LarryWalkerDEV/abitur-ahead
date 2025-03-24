@@ -11,11 +11,11 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState("login");
 
-  // Redirect to home if user is already authenticated
+  // Redirect to ExamPage if user is already authenticated
   useEffect(() => {
     if (session.user && !session.isLoading) {
-      console.log("[AuthPage] User already authenticated, redirecting to home");
-      navigate("/");
+      console.log("[AuthPage] User already authenticated, redirecting to exam page");
+      navigate("/exam");
     }
   }, [session.user, session.isLoading, navigate]);
 

@@ -1,6 +1,7 @@
 
 import React, { useEffect } from "react";
 import Footer from "@/components/layout/Footer";
+import LegalNavigation from "@/components/layout/LegalNavigation";
 
 const ImprintPage: React.FC = () => {
   useEffect(() => {
@@ -12,46 +13,46 @@ const ImprintPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-abitur-dark">
+      <LegalNavigation />
       <div className="container px-4 py-16 mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-white">Impressum</h1>
         
         <div className="prose prose-invert max-w-none">
           <h2 className="text-2xl font-semibold mb-4 mt-8">Angaben gemäß § 5 TMG</h2>
           <p className="mb-4">
-            Abitur.ai GmbH<br />
-            Musterstraße 123<br />
-            10115 Berlin<br />
-            Deutschland
+            Apex AI Research Labs LLC<br />
+            1309 Coffeen Avenue STE 1200<br />
+            Sheridan Wyoming 82801<br />
+            USA
           </p>
           
           <p className="mb-4">
-            Handelsregister: HRB 123456<br />
-            Registergericht: Amtsgericht Berlin-Charlottenburg
+            Registrierungsnummer: 32-0798359<br />
+            Registrierungsbehörde: Wyoming, USA
           </p>
           
           <p className="mb-4">
             Vertreten durch:<br />
-            Max Mustermann (Geschäftsführer)
+            Olga Görtz (Geschäftsführerin)
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">Kontakt</h2>
           <p className="mb-4">
-            Telefon: +49 (0) 30 1234567<br />
-            E-Mail: info@abitur.ai
+            E-Mail: info@abitur.ai<br />
+            Website: abitur.ai
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">Umsatzsteuer-ID</h2>
           <p className="mb-4">
-            Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
-            DE123456789
+            Die Umsatzsteuer wird durch Paddle für die EU abgewickelt.
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
           <p className="mb-4">
-            Max Mustermann<br />
-            Musterstraße 123<br />
-            10115 Berlin<br />
-            Deutschland
+            Olga Görtz<br />
+            1309 Coffeen Avenue STE 1200<br />
+            Sheridan Wyoming 82801<br />
+            USA
           </p>
           
           <h2 className="text-2xl font-semibold mb-4 mt-8">Streitschlichtung</h2>
