@@ -12,6 +12,11 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState("login");
 
+  console.log("[AuthPage] Rendering with session state:", {
+    isLoading: session.isLoading,
+    isAuthenticated: Boolean(session.user),
+  });
+
   // Simplified redirect logic
   useEffect(() => {
     // If user is authenticated, redirect to exam page

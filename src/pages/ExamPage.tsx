@@ -15,6 +15,12 @@ const ExamPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const hexCode = searchParams.get('hexCode');
 
+  console.log("[ExamPage] Rendering with session state:", {
+    isLoading: session.isLoading,
+    isAuthenticated: Boolean(session.user),
+    hasHexCode: Boolean(hexCode)
+  });
+
   // Simple authentication guard
   useEffect(() => {
     // If authentication check is complete and user is not logged in
@@ -74,7 +80,7 @@ const ExamPage: React.FC = () => {
         )}
 
         {/* Show exam generator only for authenticated users */}
-        {session.user && <ExamGenerator />}
+        {session.user && !hexCode && <ExamGenerator />}
         
         {/* Show exam display if hexCode is provided */}
         {hexCode && (

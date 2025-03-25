@@ -23,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Simplified profile fetching function
   const fetchProfile = async (userId: string) => {
+    console.log("[AuthContext] Fetching profile for user:", userId);
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -30,8 +31,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq("id", userId)
         .single();
 
-      if (error || !data) {
-        console.log("[AuthContext] Error or no data when fetching profile:", error);
+      if (error) {
+        console.error("[AuthContext] Error fetching profile:", error);
+        return null;
+      }
+
+      if (!data) {
+        console.log("[AuthContext] No profile data found for user");
         return null;
       }
 
@@ -48,13 +54,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Initialize session with simplified approach
+  // Setup auth listener and check initial session
   useEffect(() => {
     console.log("[AuthContext] Setting up auth state listener");
     
-    // Set up auth state listener
+    let isMounted = true;
+    
+    // First, set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       console.log("[AuthContext] Auth state changed:", event);
+      
+      if (!isMounted) return;
       
       if (sessionData?.user) {
         // We have a user, fetch their profile
@@ -77,45 +87,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Check for existing session
+    // Then check for existing session
     const checkExistingSession = async () => {
       try {
+        console.log("[AuthContext] Checking for existing session");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("[AuthContext] Error getting session:", error);
-          setSession({
-            user: null,
-            profile: null,
-            isLoading: false,
-          });
+          if (isMounted) {
+            setSession({
+              user: null,
+              profile: null,
+              isLoading: false,
+            });
+          }
           return;
         }
         
         if (data.session?.user) {
+          console.log("[AuthContext] Found existing session for user:", data.session.user.id);
           const profile = await fetchProfile(data.session.user.id);
-          setSession({
-            user: {
-              id: data.session.user.id,
-              email: data.session.user.email || '',
-            },
-            profile,
-            isLoading: false,
-          });
+          if (isMounted) {
+            setSession({
+              user: {
+                id: data.session.user.id,
+                email: data.session.user.email || '',
+              },
+              profile,
+              isLoading: false,
+            });
+          }
         } else {
+          console.log("[AuthContext] No existing session found");
+          if (isMounted) {
+            setSession({
+              user: null,
+              profile: null,
+              isLoading: false,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("[AuthContext] Exception during initialization:", error);
+        if (isMounted) {
           setSession({
             user: null,
             profile: null,
             isLoading: false,
           });
         }
-      } catch (error) {
-        console.error("[AuthContext] Exception during initialization:", error);
-        setSession({
-          user: null,
-          profile: null,
-          isLoading: false,
-        });
       }
     };
     
@@ -124,12 +145,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Cleanup function
     return () => {
       console.log("[AuthContext] Cleaning up auth state listener");
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   // Sign up with simplified error handling
   const signUp = async (email: string, password: string, name: string, bundesland: Bundesland) => {
+    console.log("[AuthContext] Signing up user with email:", email);
     try {
       const { error, data } = await supabase.auth.signUp({
         email,
@@ -143,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error("[AuthContext] Signup error:", error);
         toast({
           title: "Registrierung fehlgeschlagen",
           description: error.message,
@@ -156,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Bitte überprüfe deine E-Mail für weitere Anweisungen.",
       });
     } catch (error: any) {
+      console.error("[AuthContext] Signup exception:", error);
       toast({
         title: "Registrierung fehlgeschlagen",
         description: error.message || "Es ist ein unerwarteter Fehler aufgetreten.",
@@ -166,6 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign in with simplified flow
   const signIn = async (email: string, password: string) => {
+    console.log("[AuthContext] Signing in user with email:", email);
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -173,6 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error("[AuthContext] Signin error:", error);
         toast({
           title: "Anmeldung fehlgeschlagen",
           description: error.message,
@@ -186,6 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Willkommen zurück!",
       });
     } catch (error: any) {
+      console.error("[AuthContext] Signin exception:", error);
       toast({
         title: "Anmeldung fehlgeschlagen",
         description: error.message || "Es ist ein unerwarteter Fehler aufgetreten.",
@@ -196,15 +224,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign out with simplified cleanup
   const signOut = async () => {
+    console.log("[AuthContext] Signing out user");
     try {
+      // First update the state to prevent showing protected content momentarily
+      setSession({
+        user: null,
+        profile: null,
+        isLoading: true,
+      });
+      
       const { error } = await supabase.auth.signOut();
 
       if (error) {
+        console.error("[AuthContext] Signout error:", error);
         toast({
           title: "Abmeldung fehlgeschlagen",
           description: error.message,
           variant: "destructive",
         });
+        
+        // Reset loading state in case of error
+        setSession(prev => ({...prev, isLoading: false}));
         return;
       }
 
@@ -214,16 +254,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Auf Wiedersehen!",
       });
     } catch (error: any) {
+      console.error("[AuthContext] Signout exception:", error);
       toast({
         title: "Abmeldung fehlgeschlagen",
         description: error.message || "Es ist ein unerwarteter Fehler aufgetreten.",
         variant: "destructive",
       });
+      
+      // Reset loading state in case of error
+      setSession(prev => ({...prev, isLoading: false}));
     }
   };
 
   // Update profile with simplified error handling
   const updateProfile = async (data: Partial<Profile>) => {
+    console.log("[AuthContext] Updating profile");
     try {
       if (!session.user) {
         toast({
@@ -240,6 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq("id", session.user.id);
 
       if (error) {
+        console.error("[AuthContext] Profile update error:", error);
         toast({
           title: "Profil-Update fehlgeschlagen",
           description: error.message,
@@ -262,6 +308,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Dein Profil wurde erfolgreich aktualisiert.",
       });
     } catch (error: any) {
+      console.error("[AuthContext] Profile update exception:", error);
       toast({
         title: "Profil-Update fehlgeschlagen",
         description: error.message || "Es ist ein unerwarteter Fehler aufgetreten.",
