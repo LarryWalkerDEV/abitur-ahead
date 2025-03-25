@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import ExamGenerator from "@/components/exam/ExamGenerator";
@@ -14,32 +14,39 @@ const ExamPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hexCode = searchParams.get('hexCode');
+  const [authChecked, setAuthChecked] = useState(false);
 
   console.log("[ExamPage] Rendering with session state:", {
     isLoading: session.isLoading,
     isAuthenticated: Boolean(session.user),
-    hasHexCode: Boolean(hexCode)
+    hasHexCode: Boolean(hexCode),
+    authChecked
   });
 
-  // Simple authentication guard
+  // Simplified authentication check with a flag to prevent repeated checks
   useEffect(() => {
-    // If authentication check is complete and user is not logged in
-    if (!session.isLoading && !session.user) {
-      console.log("[ExamPage] User not authenticated, redirecting to auth page");
+    if (!authChecked && !session.isLoading) {
+      console.log("[ExamPage] Performing auth check");
       
-      toast({
-        title: "Nicht angemeldet",
-        description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      if (!session.user) {
+        console.log("[ExamPage] User not authenticated, redirecting to auth page");
+        
+        toast({
+          title: "Nicht angemeldet",
+          description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
+          variant: "destructive",
+          duration: 5000,
+        });
+        
+        navigate("/auth");
+      }
       
-      navigate("/auth");
+      setAuthChecked(true);
     }
-  }, [session.isLoading, session.user, navigate]);
+  }, [session.isLoading, session.user, navigate, authChecked]);
 
-  // Show a simple loading state
-  if (session.isLoading) {
+  // Show loading state only during initial check
+  if (session.isLoading && !authChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

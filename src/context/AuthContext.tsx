@@ -15,16 +15,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Simplified state with clear initial values
   const [session, setSession] = useState<UserSession>({
     user: null,
     profile: null,
     isLoading: true,
   });
 
-  // Simplified profile fetching function
+  // Simplified profile fetching
   const fetchProfile = async (userId: string) => {
-    console.log("[AuthContext] Fetching profile for user:", userId);
     try {
+      console.log("[AuthContext] Fetching profile for user:", userId);
+      
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -36,125 +38,110 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
 
-      if (!data) {
-        console.log("[AuthContext] No profile data found for user");
-        return null;
-      }
-
-      return {
+      return data ? {
         id: data.id,
         name: data.name || null,
         bundesland: (data.bundesland as Bundesland) || "Bayern",
         subscription_status: data.subscription_status as 'trial' | 'active' | 'expired' || 'trial',
         trial_end_date: data.trial_end_date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-      } as Profile;
+      } as Profile : null;
     } catch (error) {
       console.error("[AuthContext] Exception fetching profile:", error);
       return null;
     }
   };
 
-  // Setup auth listener and check initial session
+  // Simplified session initialization
   useEffect(() => {
-    console.log("[AuthContext] Setting up auth state listener");
+    console.log("[AuthContext] Initializing authentication");
     
-    let isMounted = true;
-    
-    // First, set up the auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
-      console.log("[AuthContext] Auth state changed:", event);
-      
-      if (!isMounted) return;
-      
-      if (sessionData?.user) {
-        // We have a user, fetch their profile
-        const profile = await fetchProfile(sessionData.user.id);
-        setSession({
-          user: {
-            id: sessionData.user.id,
-            email: sessionData.user.email || '',
-          },
-          profile,
-          isLoading: false,
-        });
-      } else {
-        // No user, reset session
-        setSession({
-          user: null,
-          profile: null,
-          isLoading: false,
-        });
-      }
-    });
-
-    // Then check for existing session
-    const checkExistingSession = async () => {
+    const checkSession = async () => {
       try {
-        console.log("[AuthContext] Checking for existing session");
-        const { data, error } = await supabase.auth.getSession();
+        // Get current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("[AuthContext] Error getting session:", error);
-          if (isMounted) {
-            setSession({
-              user: null,
-              profile: null,
-              isLoading: false,
-            });
-          }
-          return;
-        }
+        console.log("[AuthContext] Initial session check:", 
+          sessionError ? "Error" : (sessionData.session ? "Session found" : "No session"));
         
-        if (data.session?.user) {
-          console.log("[AuthContext] Found existing session for user:", data.session.user.id);
-          const profile = await fetchProfile(data.session.user.id);
-          if (isMounted) {
-            setSession({
-              user: {
-                id: data.session.user.id,
-                email: data.session.user.email || '',
-              },
-              profile,
-              isLoading: false,
-            });
-          }
-        } else {
-          console.log("[AuthContext] No existing session found");
-          if (isMounted) {
-            setSession({
-              user: null,
-              profile: null,
-              isLoading: false,
-            });
-          }
-        }
-      } catch (error) {
-        console.error("[AuthContext] Exception during initialization:", error);
-        if (isMounted) {
+        if (sessionError || !sessionData.session) {
           setSession({
             user: null,
             profile: null,
-            isLoading: false,
+            isLoading: false
           });
+          return;
         }
+        
+        // Session exists, fetch profile
+        const user = sessionData.session.user;
+        const profile = await fetchProfile(user.id);
+        
+        setSession({
+          user: {
+            id: user.id,
+            email: user.email || "",
+          },
+          profile,
+          isLoading: false
+        });
+      } catch (error) {
+        console.error("[AuthContext] Error during initialization:", error);
+        setSession({
+          user: null,
+          profile: null,
+          isLoading: false
+        });
       }
     };
     
-    checkExistingSession();
-
-    // Cleanup function
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("[AuthContext] Auth state changed:", event);
+        
+        if (event === "SIGNED_OUT" || !newSession) {
+          // Clear session state on sign out
+          setSession({
+            user: null,
+            profile: null,
+            isLoading: false
+          });
+          return;
+        }
+        
+        if (event === "SIGNED_IN" && newSession) {
+          // Update session state on sign in
+          const user = newSession.user;
+          const profile = await fetchProfile(user.id);
+          
+          setSession({
+            user: {
+              id: user.id,
+              email: user.email || "",
+            },
+            profile,
+            isLoading: false
+          });
+        }
+      }
+    );
+    
+    // Perform initial session check
+    checkSession();
+    
+    // Clean up the subscription
     return () => {
       console.log("[AuthContext] Cleaning up auth state listener");
-      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  // Sign up with simplified error handling
+  // Simplified sign up
   const signUp = async (email: string, password: string, name: string, bundesland: Bundesland) => {
-    console.log("[AuthContext] Signing up user with email:", email);
+    console.log("[AuthContext] Attempting to sign up:", email);
+    
     try {
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -189,9 +176,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign in with simplified flow
+  // Simplified sign in
   const signIn = async (email: string, password: string) => {
-    console.log("[AuthContext] Signing in user with email:", email);
+    console.log("[AuthContext] Attempting to sign in:", email);
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -222,11 +210,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign out with simplified cleanup
+  // Simplified sign out
   const signOut = async () => {
     console.log("[AuthContext] Signing out user");
+    
     try {
-      // First update the state to prevent showing protected content momentarily
+      // Clear state first to immediately update UI
       setSession({
         user: null,
         profile: null,
@@ -243,12 +232,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive",
         });
         
-        // Reset loading state in case of error
+        // Reset loading state on error
         setSession(prev => ({...prev, isLoading: false}));
         return;
       }
 
-      // State will be reset by the auth listener
+      // Auth state listener will update the state
       toast({
         title: "Abmeldung erfolgreich",
         description: "Auf Wiedersehen!",
@@ -261,14 +250,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
       
-      // Reset loading state in case of error
+      // Reset loading state on error
       setSession(prev => ({...prev, isLoading: false}));
     }
   };
 
-  // Update profile with simplified error handling
+  // Simplified profile update
   const updateProfile = async (data: Partial<Profile>) => {
     console.log("[AuthContext] Updating profile");
+    
     try {
       if (!session.user) {
         toast({
@@ -317,6 +307,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Provide the context value
   return (
     <AuthContext.Provider value={{ session, signUp, signIn, signOut, updateProfile }}>
       {children}
@@ -324,6 +315,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// Simplified hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

@@ -11,11 +11,10 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'implicit'
+    storage: localStorage
   }
 });
 
@@ -31,13 +30,6 @@ export const validateSession = async () => {
     
     if (!data.session) {
       console.log("No active session found");
-      return false;
-    }
-    
-    // Quick token expiration check
-    const expiresAt = data.session.expires_at;
-    if (expiresAt && expiresAt < Math.floor(Date.now() / 1000)) {
-      console.log("Session token has expired");
       return false;
     }
     
