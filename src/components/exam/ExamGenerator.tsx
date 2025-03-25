@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -13,106 +13,56 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { validateSession } from '@/integrations/supabase/client';
 
 const ExamGenerator = () => {
   const [subject, setSubject] = useState('Mathematik');
   const [difficulty, setDifficulty] = useState('Grundkurs');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const navigate = useNavigate();
   const { session } = useAuth();
-
-  // Check if the auth session is loaded and update state - more reliable
-  useEffect(() => {
-    const authState = {
-      isLoading: session.isLoading,
-      isAuthenticated: !!session.user,
-    };
-    
-    console.log('[ExamGenerator] Auth state updated:', authState);
-    
-    if (!session.isLoading) {
-      setIsAuthChecked(true);
-    }
-  }, [session.isLoading, session.user]);
 
   const handleGenerateExam = async () => {
     try {
       console.log('[ExamGenerator] Button clicked, starting exam generation');
       console.log('[ExamGenerator] Parameters:', { subject, difficulty });
-      console.log('[ExamGenerator] Auth status:', { 
-        user: session.user ? true : false, 
-        isLoading: session.isLoading,
-        isAuthChecked
-      });
       
-      // Check if auth check has completed
-      if (!isAuthChecked) {
-        console.log('[ExamGenerator] Authentication check not completed yet');
-        toast({
-          title: 'Bitte warten',
-          description: 'Authentifizierungsstatus wird überprüft...',
-          duration: 3000,
-        });
-        return;
-      }
-      
-      // Check if user is logged in
+      // Check if user is authenticated
       if (!session.user) {
         console.error('[ExamGenerator] Not authenticated');
         toast({
           title: 'Fehler',
           description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
           variant: 'destructive',
-          duration: 5000,
         });
-        
-        // Navigate to auth page after a short delay
-        setTimeout(() => {
-          navigate('/auth');
-        }, 1500);
-        
+        navigate('/auth');
+        return;
+      }
+      
+      // Validate session token
+      const isSessionValid = await validateSession();
+      if (!isSessionValid) {
+        console.error('[ExamGenerator] Session validation failed');
+        toast({
+          title: 'Sitzung abgelaufen',
+          description: 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
+          variant: 'destructive',
+        });
+        navigate('/auth');
         return;
       }
       
       setIsGenerating(true);
       
-      // Refresh the auth token before making the request
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      // Get the auth token
+      const { data: authData, error: authError } = await supabase.auth.getSession();
       
-      if (refreshError) {
-        console.error('[ExamGenerator] Error refreshing session:', refreshError);
+      if (authError || !authData.session) {
+        console.error('[ExamGenerator] Auth error:', authError);
         throw new Error('Fehler bei der Authentifizierung. Bitte melde dich erneut an.');
       }
       
-      // Get the auth token to pass to the edge function
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      
-      console.log('[ExamGenerator] Auth session check:', { 
-        hasSession: !!authData.session, 
-        error: authError ? true : false
-      });
-      
-      if (!authData.session) {
-        console.error('[ExamGenerator] No auth session found');
-        toast({
-          title: 'Fehler',
-          description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
-          variant: 'destructive',
-          duration: 5000,
-        });
-        setIsGenerating(false);
-        
-        // Navigate to auth page after a short delay
-        setTimeout(() => {
-          navigate('/auth');
-        }, 1500);
-        
-        return;
-      }
-      
-      console.log('[ExamGenerator] Calling edge function with token:', 
-        authData.session.access_token ? 'Token exists' : 'No token');
+      console.log('[ExamGenerator] Calling edge function');
       
       // Add explicit timeout for the function call
       const functionPromise = supabase.functions.invoke('math-exam', {
@@ -122,39 +72,28 @@ const ExamGenerator = () => {
         }
       });
       
-      // Increase timeout from 15 seconds to 4 minutes (240000 ms)
+      // Increase timeout to 4 minutes (240000 ms)
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Edge function timeout after 4 minutes')), 240000);
       });
       
-      try {
-        // Race the function call against the timeout
-        const result = await Promise.race([
-          functionPromise,
-          timeoutPromise
-        ]);
-        
-        console.log('[ExamGenerator] Edge function response:', result);
-        
-        // Now properly type-check the result
-        if (!result || !('data' in result) || !result.data || !('hexCode' in result.data)) {
-          console.error('[ExamGenerator] No hexCode in response:', result);
-          throw new Error('Die Prüfungsgenerierung war erfolglos. Keine Prüfungs-ID erhalten.');
-        }
-        
-        toast({
-          title: 'Prüfung wird generiert',
-          description: 'Die Prüfung wird im Hintergrund erstellt. Bitte warten Sie einen Moment.',
-          duration: 5000,
-        });
-        
-        // Navigate to the exam display page with the hexcode
-        console.log('[ExamGenerator] Navigating to exam with hexCode:', result.data.hexCode);
-        navigate(`/exam?hexCode=${result.data.hexCode}`);
-      } catch (raceError: any) {
-        console.error('[ExamGenerator] Race error:', raceError);
-        throw raceError;
+      // Race the function call against the timeout
+      const result = await Promise.race([functionPromise, timeoutPromise]);
+      
+      console.log('[ExamGenerator] Edge function response:', result);
+      
+      if (!result || !('data' in result) || !result.data || !('hexCode' in result.data)) {
+        throw new Error('Die Prüfungsgenerierung war erfolglos. Keine Prüfungs-ID erhalten.');
       }
+      
+      toast({
+        title: 'Prüfung wird generiert',
+        description: 'Die Prüfung wird im Hintergrund erstellt. Bitte warten Sie einen Moment.',
+        duration: 5000,
+      });
+      
+      // Navigate to the exam display page with the hexcode
+      navigate(`/exam?hexCode=${result.data.hexCode}`);
       
     } catch (error: any) {
       console.error('[ExamGenerator] Error generating exam:', error);

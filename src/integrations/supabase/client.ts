@@ -21,12 +21,29 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Export a function to validate the current session token
 export const validateSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  
-  if (error || !data.session) {
-    console.error("Session validation failed:", error);
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Session validation failed:", error);
+      return false;
+    }
+    
+    if (!data.session) {
+      console.log("No active session found");
+      return false;
+    }
+    
+    // Quick token expiration check
+    const expiresAt = data.session.expires_at;
+    if (expiresAt && expiresAt < Math.floor(Date.now() / 1000)) {
+      console.log("Session token has expired");
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    console.error("Exception during session validation:", e);
     return false;
   }
-  
-  return true;
 };

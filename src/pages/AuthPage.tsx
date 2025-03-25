@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SignUpForm from "@/components/auth/SignUpForm";
 import LoginForm from "@/components/auth/LoginForm";
@@ -10,49 +10,23 @@ import BackToHomeLink from "@/components/layout/BackToHomeLink";
 const AuthPage: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("login");
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [activeTab, setActiveTab] = React.useState("login");
 
-  // Improved redirect handling with debounce
+  // Simplified redirect logic
   useEffect(() => {
-    console.log("[AuthPage] Component mounted, checking authentication state", {
-      user: session.user ? true : false,
-      isLoading: session.isLoading,
-      isNavigating
-    });
-    
-    // Only proceed if we're not currently navigating to avoid loops
-    if (isNavigating) {
-      return;
+    // If user is authenticated, redirect to exam page
+    if (session.user && !session.isLoading) {
+      console.log("[AuthPage] User is authenticated, redirecting to exam page");
+      navigate("/exam");
     }
-    
-    // If user is authenticated and session loading is complete, redirect to exam page
-    if (!session.isLoading && session.user) {
-      console.log("[AuthPage] User authenticated, redirecting to exam page");
-      setIsNavigating(true);
-      
-      // Add a small delay to ensure all state updates are processed
-      const redirectTimer = setTimeout(() => {
-        navigate("/exam");
-      }, 100);
-      
-      return () => clearTimeout(redirectTimer);
-    }
-    
-    // If session has finished loading and no user is found, just stay on the auth page
-    if (!session.isLoading && !session.user) {
-      console.log("[AuthPage] Authentication check complete, no user found");
-    }
-  }, [session.user, session.isLoading, navigate, isNavigating]);
+  }, [session.user, session.isLoading, navigate]);
 
   const handleTabChange = (value: string) => {
-    console.log(`[AuthPage] Tab changed to ${value}`);
     setActiveTab(value);
   };
 
-  // Show a loading state while checking authentication, but with a maximum duration
+  // Simple loading state
   if (session.isLoading) {
-    console.log("[AuthPage] Session is loading");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -110,10 +84,7 @@ const AuthPage: React.FC = () => {
               : "Bereits registriert?"}{" "}
             <button
               className="text-abitur-cyan hover:text-abitur-cyan/90 underline"
-              onClick={() => {
-                console.log("[AuthPage] Toggle between login and signup");
-                handleTabChange(activeTab === "login" ? "signup" : "login");
-              }}
+              onClick={() => handleTabChange(activeTab === "login" ? "signup" : "login")}
             >
               {activeTab === "login" ? "Jetzt registrieren" : "Jetzt anmelden"}
             </button>

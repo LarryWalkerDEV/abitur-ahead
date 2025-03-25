@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import ExamGenerator from "@/components/exam/ExamGenerator";
@@ -14,52 +14,26 @@ const ExamPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hexCode = searchParams.get('hexCode');
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
-  // Improved auth status check
+  // Simple authentication guard
   useEffect(() => {
-    console.log("[ExamPage] Component mounted, checking authentication", {
-      user: session.user ? true : false,
-      isLoading: session.isLoading,
-      hexCode: hexCode,
-      isNavigating
-    });
-    
-    // Skip if already navigating to prevent loops
-    if (isNavigating) {
-      return;
-    }
-    
-    // When session loading is done, we can make auth decisions
-    if (!session.isLoading) {
-      setAuthCheckComplete(true);
+    // If authentication check is complete and user is not logged in
+    if (!session.isLoading && !session.user) {
+      console.log("[ExamPage] User not authenticated, redirecting to auth page");
       
-      // If no user and auth check is done, redirect to auth page
-      if (!session.user) {
-        console.log("[ExamPage] User not authenticated, redirecting to auth page");
-        setIsNavigating(true);
-        
-        toast({
-          title: "Nicht angemeldet",
-          description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
-          variant: "destructive",
-          duration: 5000,
-        });
-        
-        // Small delay to ensure state updates and toast is visible
-        setTimeout(() => {
-          navigate("/auth");
-        }, 500);
-      } else {
-        console.log("[ExamPage] User is authenticated, staying on exam page");
-      }
+      toast({
+        title: "Nicht angemeldet",
+        description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      
+      navigate("/auth");
     }
-  }, [session.isLoading, session.user, navigate, hexCode, isNavigating]);
+  }, [session.isLoading, session.user, navigate]);
 
-  // Show a better loading state with animation
-  if (session.isLoading || (!authCheckComplete && !session.user)) {
-    console.log("[ExamPage] Showing loading screen");
+  // Show a simple loading state
+  if (session.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -86,7 +60,7 @@ const ExamPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Authentication status indicator */}
+        {/* Authentication status indicator for non-authenticated users */}
         {!session.user && (
           <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4 mb-6 text-center">
             <p className="text-white mb-3">Du musst angemeldet sein, um Prüfungen zu erstellen.</p>
@@ -99,7 +73,7 @@ const ExamPage: React.FC = () => {
           </div>
         )}
 
-        {/* Always show the generator at the top if user is logged in */}
+        {/* Show exam generator only for authenticated users */}
         {session.user && <ExamGenerator />}
         
         {/* Show exam display if hexCode is provided */}
@@ -107,7 +81,7 @@ const ExamPage: React.FC = () => {
           <ExamDisplay hexCode={hexCode} />
         )}
         
-        {/* Show exam history if user is logged in and no hexCode */}
+        {/* Show exam history for authenticated users when no hexCode */}
         {session.user && !hexCode && (
           <ExamHistory />
         )}
