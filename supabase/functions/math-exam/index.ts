@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Anthropic from 'https://esm.sh/@anthropic-ai/sdk@0.17.1'
@@ -201,15 +200,19 @@ async function generateExamContent(supabaseClient, hexCode, userPrompt, systemPr
     // Create Anthropic client
     const anthropic = new Anthropic({ apiKey: anthropicKey });
     
-    // Call Anthropic Claude API
-    console.log('[math-exam] Calling Claude API...');
+    // Call Anthropic Claude API with updated model parameters
+    console.log('[math-exam] Calling Claude API with updated model parameters...');
     const response = await Promise.race([
       anthropic.messages.create({
-        model: "claude-3-sonnet-20240229",
-        max_tokens: 12000,
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 40000,
         messages: [{ role: "user", content: userPrompt }],
         system: systemPrompt,
-        temperature: 0.7
+        temperature: 0.7,
+        thinking: { 
+          type: "enabled", 
+          budget_tokens: 4000 
+        }
       }),
       // 4-minute timeout
       new Promise((_, reject) => {

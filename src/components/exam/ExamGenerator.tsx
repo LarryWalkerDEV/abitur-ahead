@@ -95,9 +95,9 @@ const ExamGenerator = () => {
         }
       });
       
-      // Setup a 15 second timeout
+      // Increase timeout from 15 seconds to 4 minutes (240000 ms)
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Edge function timeout after 15 seconds')), 15000);
+        setTimeout(() => reject(new Error('Edge function timeout after 4 minutes')), 240000);
       });
       
       try {
@@ -110,7 +110,7 @@ const ExamGenerator = () => {
         console.log('[ExamGenerator] Edge function response:', result);
         
         // Now properly type-check the result
-        if (!result.data || !result.data.hexCode) {
+        if (!result || !('data' in result) || !result.data || !('hexCode' in result.data)) {
           console.error('[ExamGenerator] No hexCode in response:', result);
           throw new Error('Die Prüfungsgenerierung war erfolglos. Keine Prüfungs-ID erhalten.');
         }
