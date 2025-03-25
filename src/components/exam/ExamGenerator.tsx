@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -18,13 +18,37 @@ const ExamGenerator = () => {
   const [subject, setSubject] = useState('Mathematik');
   const [difficulty, setDifficulty] = useState('Grundkurs');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const navigate = useNavigate();
   const { session } = useAuth();
+
+  // Check if the auth session is loaded and update state
+  useEffect(() => {
+    if (!session.isLoading) {
+      setIsAuthChecked(true);
+    }
+  }, [session.isLoading]);
 
   const handleGenerateExam = async () => {
     try {
       console.log('[ExamGenerator] Button clicked, starting exam generation');
       console.log('[ExamGenerator] Parameters:', { subject, difficulty });
+      console.log('[ExamGenerator] Auth status:', { 
+        user: session.user ? true : false, 
+        isLoading: session.isLoading,
+        isAuthChecked
+      });
+      
+      // Check if auth check has completed
+      if (!isAuthChecked) {
+        console.log('[ExamGenerator] Authentication check not completed yet');
+        toast({
+          title: 'Bitte warten',
+          description: 'Authentifizierungsstatus wird überprüft...',
+          duration: 3000,
+        });
+        return;
+      }
       
       // Check if user is logged in
       if (!session.user) {
@@ -166,7 +190,7 @@ const ExamGenerator = () => {
           
           <Button 
             onClick={handleGenerateExam} 
-            disabled={isGenerating}
+            disabled={isGenerating || session.isLoading}
             className="px-8 h-10 bg-abitur-pink hover:bg-abitur-pink/90 text-white mt-2 md:mt-0"
           >
             {isGenerating ? (
@@ -174,9 +198,17 @@ const ExamGenerator = () => {
                 <span className="mr-2">Generieren...</span>
                 <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               </>
+            ) : session.isLoading ? (
+              'Laden...'
             ) : 'Prüfung generieren'}
           </Button>
         </div>
+        
+        {!session.user && !session.isLoading && (
+          <div className="text-abitur-pink text-sm mt-2">
+            Du musst angemeldet sein, um eine Prüfung zu generieren.
+          </div>
+        )}
       </div>
     </Card>
   );
