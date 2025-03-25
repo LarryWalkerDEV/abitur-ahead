@@ -35,8 +35,14 @@ const ExamGenerator = () => {
       console.log('[ExamGenerator] Starting exam generation, subject:', subject, 'difficulty:', difficulty);
       setIsGenerating(true);
       
+      // Get the auth token to pass to the edge function
+      const { data: authData } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('math-exam', {
         body: { subject, difficulty },
+        headers: {
+          Authorization: `Bearer ${authData.session?.access_token || ''}`
+        }
       });
       
       if (error) {
