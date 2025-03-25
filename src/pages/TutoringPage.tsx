@@ -1,170 +1,48 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Paperclip, 
-  Send, 
-  RotateCw, 
-  FileText, 
-  X,
-  UserCircle2 
-} from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'ai';
-  timestamp: Date;
-}
-
-interface Attachment {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  file: File;
-}
+import BackToHomeLink from "@/components/layout/BackToHomeLink";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TutoringPage: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log("[TutoringPage] Component mounted", {
-      user: session.user ? true : false,
-      isLoading: session.isLoading
-    });
+    console.log("[TutoringPage] Component mounted, checking authentication");
     
-    // Set a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      if (session.isLoading) {
-        console.log("[TutoringPage] Loading timeout reached, forcing page to load");
-        setPageLoaded(true);
-      }
-    }, 5000);
-    
-    // Check authentication state
-    const checkAuth = async () => {
+    const checkAuth = () => {
+      // If session loading is complete
       if (!session.isLoading) {
-        // Clear timeout as we've loaded
-        clearTimeout(loadingTimeout);
-        
-        // Redirect to auth if not logged in
         if (!session.user) {
           console.log("[TutoringPage] User not authenticated, redirecting to auth page");
           navigate("/auth");
-          return;
+        } else {
+          console.log("[TutoringPage] User authenticated, loading page");
+          setPageLoaded(true);
         }
-        
-        console.log("[TutoringPage] User authenticated, page loaded");
-        setPageLoaded(true);
       }
     };
     
+    // Check auth immediately
     checkAuth();
-
+    
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.log("[TutoringPage] Loading timeout reached, forcing page to load");
+      setPageLoaded(true);
+    }, 3000);
+    
     return () => {
       clearTimeout(loadingTimeout);
       console.log("[TutoringPage] Component unmounted");
     };
   }, [session.user, session.isLoading, navigate]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[TutoringPage] Dateien ausgewählt:", e.target.files);
-    if (e.target.files && e.target.files.length > 0) {
-      try {
-        const newFiles = Array.from(e.target.files).map(file => ({
-          id: Math.random().toString(36).substring(2, 9),
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          file
-        }));
-        setAttachments(prev => [...prev, ...newFiles]);
-      } catch (error) {
-        console.error("[TutoringPage] Fehler beim Verarbeiten der Dateien:", error);
-        toast({
-          title: "Fehler beim Hochladen",
-          description: "Die ausgewählten Dateien konnten nicht verarbeitet werden.",
-          variant: "destructive",
-        });
-      }
-    }
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const removeAttachment = (id: string) => {
-    console.log("[TutoringPage] Anhang entfernt:", id);
-    setAttachments(prev => prev.filter(attachment => attachment.id !== id));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() && attachments.length === 0) return;
-    
-    console.log("[TutoringPage] Nachricht gesendet:", message);
-    console.log("[TutoringPage] Anhänge:", attachments);
-    
-    // Add user message to chat
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setMessage("");
-    setIsSubmitting(true);
-    
-    try {
-      // Simulate AI response
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Sample AI response
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Ich bin dein Abitur AI Tutor. Wie kann ich dir bei deiner Prüfungsvorbereitung helfen? Ich kann dir Übungsaufgaben erklären oder Zusammenfassungen zu bestimmten Themen geben.",
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-      setAttachments([]);
-      
-    } catch (error) {
-      console.error("[TutoringPage] Fehler beim Senden der Nachricht:", error);
-      toast({
-        title: "Fehler",
-        description: "Beim Senden deiner Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (session.isLoading && !pageLoaded) {
+  // Show loading screen while checking auth
+  if ((session.isLoading || !pageLoaded) && !session.user) {
     console.log("[TutoringPage] Showing loading screen");
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -175,113 +53,39 @@ const TutoringPage: React.FC = () => {
     );
   }
 
+  // If we don't have a user at this point, the useEffect will handle redirect
+  // But let's add a backup check
+  if (!session.user && !session.isLoading) {
+    console.log("[TutoringPage] No user found after loading, redirecting to auth");
+    navigate("/auth");
+    return null; // Return null while redirecting
+  }
+
   return (
     <div className="abitur-grid-bg min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        <div className="absolute top-4 left-4">
+          <BackToHomeLink />
+        </div>
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-            Abitur Tutoring
+            Nachhilfe
           </h1>
           <p className="text-muted-foreground">
-            Stelle Fragen zu deinen Übungen und erhalte personalisierte Unterstützung
+            Finde Nachhilfe für deine Abiturprüfung
           </p>
         </div>
 
-        <div className="glassmorphism rounded-lg flex flex-col h-[calc(100vh-12rem)]">
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                <FileText className="h-16 w-16 mb-4 text-abitur-pink/50" />
-                <h3 className="text-lg font-medium">Keine Nachrichten</h3>
-                <p className="max-w-md">
-                  Stelle eine Frage zu deinem Lernmaterial oder lade ein Dokument hoch, um Hilfe zu bekommen.
-                </p>
-              </div>
-            ) : (
-              messages.map((msg) => (
-                <div 
-                  key={msg.id}
-                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div 
-                    className={`max-w-[80%] rounded-2xl p-4 ${
-                      msg.sender === 'user' 
-                        ? 'bg-abitur-pink/20 text-white' 
-                        : 'bg-white/10 text-white'
-                    }`}
-                  >
-                    <div className="flex items-center mb-2">
-                      {msg.sender === 'ai' && (
-                        <span className="text-abitur-cyan font-semibold mr-2">Abitur AI</span>
-                      )}
-                      {msg.sender === 'user' && (
-                        <span className="text-abitur-pink font-semibold ml-auto">Du</span>
-                      )}
-                    </div>
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                    <div className="text-xs text-muted-foreground text-right mt-1">
-                      {msg.timestamp.toLocaleTimeString('de-DE', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="p-4 border-t border-white/10">
-            {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {attachments.map(attachment => (
-                  <div key={attachment.id} className="bg-white/10 rounded px-3 py-1 flex items-center gap-2 text-sm">
-                    <FileText className="h-4 w-4" />
-                    <span className="truncate max-w-[150px]">{attachment.name}</span>
-                    <button 
-                      onClick={() => removeAttachment(attachment.id)}
-                      className="text-white/70 hover:text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".pdf,.png,.jpg,.jpeg"
-                multiple
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 shrink-0 rounded-full"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Paperclip className="h-5 w-5" />
-              </Button>
-              <Textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Stelle eine Frage zum Lernmaterial..."
-                className="min-h-10 flex-1 resize-none"
-              />
-              <Button 
-                type="submit" 
-                size="icon" 
-                className="h-10 w-10 shrink-0 rounded-full bg-abitur-pink hover:bg-abitur-pink/90"
-                disabled={isSubmitting || (!message.trim() && attachments.length === 0)}
-              >
-                {isSubmitting ? <RotateCw className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-              </Button>
-            </form>
+        <div className="glassmorphism p-6 rounded-lg">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold mb-4">Nachhilfe-Funktionalität</h2>
+            <p className="text-muted-foreground mb-6">
+              Hier findest du bald eine Übersicht von Nachhilfelehrern in deiner Region.
+            </p>
+            <p className="text-muted-foreground">
+              Diese Funktion ist derzeit in Entwicklung und wird in Kürze verfügbar sein.
+            </p>
           </div>
         </div>
       </div>
