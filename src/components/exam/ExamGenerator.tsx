@@ -33,6 +33,7 @@ const ExamGenerator = () => {
           title: 'Fehler',
           description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
           variant: 'destructive',
+          duration: 5000,
         });
         return;
       }
@@ -53,6 +54,7 @@ const ExamGenerator = () => {
           title: 'Fehler',
           description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
           variant: 'destructive',
+          duration: 5000,
         });
         setIsGenerating(false);
         return;
@@ -70,36 +72,38 @@ const ExamGenerator = () => {
       });
       
       // Setup a 15 second timeout
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Edge function timeout after 15 seconds')), 15000);
       });
       
-      // Race the function call against the timeout
-      const { data, error } = await Promise.race([
-        functionPromise,
-        timeoutPromise
-      ]);
-      
-      console.log('[ExamGenerator] Edge function response:', data, 'Error:', error);
-      
-      if (error) {
-        console.error('[ExamGenerator] Error invoking math-exam function:', error);
-        throw error;
+      try {
+        // Race the function call against the timeout
+        const result = await Promise.race([
+          functionPromise,
+          timeoutPromise
+        ]);
+        
+        console.log('[ExamGenerator] Edge function response:', result);
+        
+        // Now properly type-check the result
+        if (!result.data || !result.data.hexCode) {
+          console.error('[ExamGenerator] No hexCode in response:', result);
+          throw new Error('Die Prüfungsgenerierung war erfolglos. Keine Prüfungs-ID erhalten.');
+        }
+        
+        toast({
+          title: 'Prüfung wird generiert',
+          description: 'Die Prüfung wird im Hintergrund erstellt. Bitte warten Sie einen Moment.',
+          duration: 5000,
+        });
+        
+        // Navigate to the exam display page with the hexcode
+        console.log('[ExamGenerator] Navigating to exam with hexCode:', result.data.hexCode);
+        navigate(`/exam?hexCode=${result.data.hexCode}`);
+      } catch (raceError: any) {
+        console.error('[ExamGenerator] Race error:', raceError);
+        throw raceError;
       }
-      
-      if (!data || !data.hexCode) {
-        console.error('[ExamGenerator] No hexCode in response:', data);
-        throw new Error('Die Prüfungsgenerierung war erfolglos. Keine Prüfungs-ID erhalten.');
-      }
-      
-      toast({
-        title: 'Prüfung wird generiert',
-        description: 'Die Prüfung wird im Hintergrund erstellt. Bitte warten Sie einen Moment.',
-      });
-      
-      // Navigate to the exam display page with the hexcode
-      console.log('[ExamGenerator] Navigating to exam with hexCode:', data.hexCode);
-      navigate(`/exam?hexCode=${data.hexCode}`);
       
     } catch (error: any) {
       console.error('[ExamGenerator] Error generating exam:', error);
@@ -107,6 +111,7 @@ const ExamGenerator = () => {
         title: 'Fehler',
         description: `Die Prüfung konnte nicht generiert werden: ${error.message || 'Unbekannter Fehler'}`,
         variant: 'destructive',
+        duration: 5000,
       });
     } finally {
       setIsGenerating(false);
