@@ -48,17 +48,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           
           // Basic profile fetch
-          const { data: profile } = await supabase
+          const { data: profileData } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", user.id)
             .single();
           
-          setSession({
-            user,
-            profile: profile || null,
-            isLoading: false
-          });
+          // Here we need to cast the bundesland to the Bundesland type
+          if (profileData) {
+            const profile: Profile = {
+              ...profileData,
+              bundesland: profileData.bundesland as Bundesland,
+            };
+            
+            setSession({
+              user,
+              profile,
+              isLoading: false
+            });
+          } else {
+            setSession({
+              user,
+              profile: null,
+              isLoading: false
+            });
+          }
         }
       }
     );
@@ -87,12 +101,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select("*")
         .eq("id", user.id)
         .single()
-        .then(({ data: profile }) => {
-          setSession({
-            user,
-            profile: profile || null,
-            isLoading: false
-          });
+        .then(({ data: profileData }) => {
+          // Here we need to cast the bundesland to the Bundesland type
+          if (profileData) {
+            const profile: Profile = {
+              ...profileData,
+              bundesland: profileData.bundesland as Bundesland,
+            };
+            
+            setSession({
+              user,
+              profile,
+              isLoading: false
+            });
+          } else {
+            setSession({
+              user,
+              profile: null,
+              isLoading: false
+            });
+          }
         });
     });
     
@@ -219,21 +247,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Refresh profile after update
-      const { data: updatedProfile } = await supabase
+      const { data: updatedProfileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .single();
 
-      setSession({
-        ...session,
-        profile: updatedProfile || null,
-      });
+      if (updatedProfileData) {
+        // Here we need to cast the bundesland to the Bundesland type
+        const updatedProfile: Profile = {
+          ...updatedProfileData,
+          bundesland: updatedProfileData.bundesland as Bundesland,
+        };
+        
+        setSession({
+          ...session,
+          profile: updatedProfile,
+        });
 
-      toast({
-        title: "Profil aktualisiert",
-        description: "Dein Profil wurde erfolgreich aktualisiert.",
-      });
+        toast({
+          title: "Profil aktualisiert",
+          description: "Dein Profil wurde erfolgreich aktualisiert.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Profil-Update fehlgeschlagen",
