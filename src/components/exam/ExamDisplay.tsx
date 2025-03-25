@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
 interface ExamDisplayProps {
   hexCode: string;
@@ -15,6 +16,7 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { session } = useAuth();
+  const [pollingInterval, setPollingInterval] = useState<number | null>(null);
 
   useEffect(() => {
     if (!hexCode || !session.user) {
@@ -34,10 +36,12 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
           .single();
         
         if (error) {
+          console.error('[ExamDisplay] Error fetching exam:', error);
           throw error;
         }
         
         if (!data) {
+          console.error('[ExamDisplay] No exam data found for hexCode:', hexCode);
           throw new Error('Prüfung konnte nicht gefunden werden');
         }
         
@@ -46,7 +50,14 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
         
         // If the exam is still generating, set up polling
         if (data.status === 'generating') {
-          const pollingInterval = setInterval(async () => {
+          console.log('[ExamDisplay] Exam is still generating, setting up polling');
+          
+          // Clear any existing interval before setting a new one
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+          }
+          
+          const interval = window.setInterval(async () => {
             console.log('[ExamDisplay] Polling for exam status updates...');
             
             const { data: updatedExam, error: pollingError } = await supabase
@@ -57,23 +68,51 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
               
             if (pollingError) {
               console.error('[ExamDisplay] Polling error:', pollingError);
-              clearInterval(pollingInterval);
+              clearInterval(interval);
+              setPollingInterval(null);
+              toast({
+                title: 'Fehler',
+                description: 'Es gab ein Problem beim Abrufen der Prüfungsdaten.',
+                variant: 'destructive',
+              });
               return;
             }
             
-            if (updatedExam && updatedExam.status !== 'generating') {
-              console.log('[ExamDisplay] Exam generation completed:', updatedExam.status);
+            if (updatedExam) {
+              console.log('[ExamDisplay] Polling returned updated exam:', updatedExam);
               setExam(updatedExam);
-              clearInterval(pollingInterval);
+              
+              if (updatedExam.status !== 'generating') {
+                console.log('[ExamDisplay] Exam generation completed, status:', updatedExam.status);
+                clearInterval(interval);
+                setPollingInterval(null);
+                
+                if (updatedExam.status === 'completed') {
+                  toast({
+                    title: 'Prüfung fertig',
+                    description: 'Ihre Prüfung wurde erfolgreich generiert.',
+                  });
+                } else if (updatedExam.status === 'error') {
+                  toast({
+                    title: 'Fehler',
+                    description: updatedExam.error_message || 'Die Prüfungsgenerierung ist fehlgeschlagen.',
+                    variant: 'destructive',
+                  });
+                }
+              }
             }
-          }, 10000); // Poll every 10 seconds
+          }, 5000); // Poll every 5 seconds
           
-          // Clean up interval on component unmount
-          return () => clearInterval(pollingInterval);
+          setPollingInterval(interval);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('[ExamDisplay] Error in try/catch:', err);
-        setError('Prüfung konnte nicht geladen werden');
+        setError(err.message || 'Prüfung konnte nicht geladen werden');
+        toast({
+          title: 'Fehler',
+          description: err.message || 'Prüfung konnte nicht geladen werden',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
@@ -81,6 +120,13 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
 
     fetchExam();
     
+    // Clean up interval on component unmount
+    return () => {
+      if (pollingInterval) {
+        console.log('[ExamDisplay] Cleaning up polling interval');
+        clearInterval(pollingInterval);
+      }
+    };
   }, [hexCode, session.user]);
 
   if (loading) {
@@ -116,9 +162,10 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
         {exam.status === 'generating' ? (
           <div className="text-center py-12">
             <h3 className="text-xl font-bold mb-4">Prüfung wird generiert...</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-4">
               Dieser Vorgang kann einige Minuten dauern. Die Seite aktualisiert sich automatisch.
             </p>
+            <div className="w-16 h-16 border-4 border-abitur-pink border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         ) : exam.status === 'error' ? (
           <div className="text-red-600 p-4">

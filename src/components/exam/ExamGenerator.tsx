@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -21,19 +21,21 @@ const ExamGenerator = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
 
-  // Debug session on component mount
-  useEffect(() => {
-    console.log('[ExamGenerator] Session state:', { 
-      isLoggedIn: !!session.user,
-      userId: session.user?.id,
-      isLoading: session.isLoading
-    });
-  }, [session]);
-
   const handleGenerateExam = async () => {
     try {
       console.log('[ExamGenerator] Button clicked, starting exam generation');
       console.log('[ExamGenerator] Parameters:', { subject, difficulty });
+      
+      // Check if user is logged in
+      if (!session.user) {
+        console.error('[ExamGenerator] Not authenticated');
+        toast({
+          title: 'Fehler',
+          description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
+          variant: 'destructive',
+        });
+        return;
+      }
       
       setIsGenerating(true);
       
@@ -63,7 +65,7 @@ const ExamGenerator = () => {
       const functionPromise = supabase.functions.invoke('math-exam', {
         body: { subject, difficulty },
         headers: {
-          Authorization: `Bearer ${authData.session.access_token || ''}`
+          Authorization: `Bearer ${authData.session.access_token}`
         }
       });
       
@@ -75,9 +77,7 @@ const ExamGenerator = () => {
       // Race the function call against the timeout
       const { data, error } = await Promise.race([
         functionPromise,
-        timeoutPromise.then(() => {
-          throw new Error('Edge function timeout after 15 seconds');
-        })
+        timeoutPromise
       ]);
       
       console.log('[ExamGenerator] Edge function response:', data, 'Error:', error);
@@ -101,7 +101,7 @@ const ExamGenerator = () => {
       console.log('[ExamGenerator] Navigating to exam with hexCode:', data.hexCode);
       navigate(`/exam?hexCode=${data.hexCode}`);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ExamGenerator] Error generating exam:', error);
       toast({
         title: 'Fehler',
@@ -164,7 +164,12 @@ const ExamGenerator = () => {
             disabled={isGenerating}
             className="px-8 h-10 bg-abitur-pink hover:bg-abitur-pink/90 text-white mt-2 md:mt-0"
           >
-            {isGenerating ? 'Generieren...' : 'Prüfung generieren'}
+            {isGenerating ? (
+              <>
+                <span className="mr-2">Generieren...</span>
+                <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              </>
+            ) : 'Prüfung generieren'}
           </Button>
         </div>
       </div>
