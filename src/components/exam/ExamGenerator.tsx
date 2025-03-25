@@ -23,20 +23,21 @@ const ExamGenerator = () => {
 
   const handleGenerateExam = async () => {
     try {
-      if (!session.user) {
-        toast({
-          title: 'Fehler',
-          description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
       console.log('[ExamGenerator] Starting exam generation, subject:', subject, 'difficulty:', difficulty);
       setIsGenerating(true);
       
       // Get the auth token to pass to the edge function
       const { data: authData } = await supabase.auth.getSession();
+      
+      if (!authData.session) {
+        toast({
+          title: 'Fehler',
+          description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
+          variant: 'destructive',
+        });
+        setIsGenerating(false);
+        return;
+      }
       
       const { data, error } = await supabase.functions.invoke('math-exam', {
         body: { subject, difficulty },
@@ -124,7 +125,7 @@ const ExamGenerator = () => {
           
           <Button 
             onClick={handleGenerateExam} 
-            disabled={isGenerating || !session.user}
+            disabled={isGenerating}
             className="px-8 h-10 bg-abitur-pink hover:bg-abitur-pink/90 text-white mt-2 md:mt-0"
           >
             {isGenerating ? 'Generieren...' : 'Prüfung generieren'}
