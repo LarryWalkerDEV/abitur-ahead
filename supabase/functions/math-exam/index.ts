@@ -11,12 +11,15 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  console.log('[math-exam] Function started');
+  console.log('[math-exam] Function started with method:', req.method);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('[math-exam] Handling OPTIONS request for CORS');
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
   }
 
   try {
@@ -51,19 +54,29 @@ serve(async (req) => {
 
     // Authenticate user
     const authHeader = req.headers.get('Authorization');
+    console.log('[math-exam] Auth header present:', !!authHeader);
+    
     if (!authHeader) {
       console.error('[math-exam] No authorization header');
       throw new Error('Authentication required');
     }
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    const token = authHeader.replace('Bearer ', '');
+    console.log('[math-exam] Token length:', token.length);
+    
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
-    if (userError || !user) {
+    if (userError) {
       console.error('[math-exam] Authentication error:', userError);
-      throw new Error('Unauthorized access');
+      throw new Error('Unauthorized access: ' + userError.message);
     }
+    
+    if (!user) {
+      console.error('[math-exam] No user found with token');
+      throw new Error('Unauthorized access: User not found');
+    }
+    
+    console.log('[math-exam] Authenticated user:', user.id);
 
     // Get user's bundesland from profile
     const { data: profileData, error: profileError } = await supabaseClient
@@ -153,6 +166,7 @@ serve(async (req) => {
     }
 
     // Return immediate success response with hexcode
+    console.log('[math-exam] Returning success response with hexCode:', hexCode);
     return new Response(
       JSON.stringify({
         hexCode,
