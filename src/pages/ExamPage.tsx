@@ -31,7 +31,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "@/hooks/use-toast";
 import BackToHomeLink from "@/components/layout/BackToHomeLink";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const examSchema = z.object({
   subject: z.string().min(1, {
@@ -65,43 +64,49 @@ const ExamPage: React.FC = () => {
       isLoading: session.isLoading
     });
     
-    const checkAuth = () => {
-      // If session loading is complete
+    // Set a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (session.isLoading) {
+        console.log("[ExamPage] Loading timeout reached, forcing page to load");
+        setPageLoaded(true);
+      }
+    }, 5000);
+    
+    // Make sure we're setting loading state correctly
+    const checkAuth = async () => {
       if (!session.isLoading) {
+        // Clear timeout as we've loaded
+        clearTimeout(loadingTimeout);
+        
+        // Redirect to auth if not logged in
         if (!session.user) {
           console.log("[ExamPage] User not authenticated, redirecting to auth page");
           navigate("/auth");
-        } else {
-          console.log("[ExamPage] User authenticated, loading exams");
-          
-          // Fetch previous exams if we need to
-          try {
-            // This would be implemented with a Supabase query
-            setPreviousExams([]);
-            console.log("[ExamPage] Previous exams successfully loaded");
-          } catch (error) {
-            console.error("[ExamPage] Error fetching previous exams:", error);
-            toast({
-              title: "Error",
-              description: "Previous exams could not be loaded",
-              variant: "destructive",
-            });
-          } finally {
-            setPageLoaded(true);
-          }
+          return;
+        }
+        
+        console.log("[ExamPage] User authenticated, loading exams");
+        
+        // Fetch previous exams if we were to implement this functionality
+        try {
+          // This would be implemented with a Supabase query
+          setPreviousExams([]);
+          console.log("[ExamPage] Previous exams successfully loaded");
+        } catch (error) {
+          console.error("[ExamPage] Error fetching previous exams:", error);
+          toast({
+            title: "Error",
+            description: "Previous exams could not be loaded",
+            variant: "destructive",
+          });
+        } finally {
+          setPageLoaded(true);
         }
       }
     };
-    
-    // Check auth immediately
+
     checkAuth();
-    
-    // Set a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      console.log("[ExamPage] Loading timeout reached, forcing page to load");
-      setPageLoaded(true);
-    }, 3000);
-    
+
     return () => {
       clearTimeout(loadingTimeout);
       console.log("[ExamPage] Component unmounted");
@@ -146,7 +151,7 @@ const ExamPage: React.FC = () => {
   };
 
   // Show loading screen while checking auth or loading page data
-  if ((session.isLoading || !pageLoaded) && !session.user) {
+  if (session.isLoading && !pageLoaded) {
     console.log("[ExamPage] Showing loading screen");
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -157,21 +162,9 @@ const ExamPage: React.FC = () => {
     );
   }
 
-  // If we don't have a user at this point, the useEffect will handle redirect
-  // But let's add a backup check
-  if (!session.user && !session.isLoading) {
-    console.log("[ExamPage] No user found after loading, redirecting to auth");
-    navigate("/auth");
-    return null; // Return null while redirecting
-  }
-
   return (
     <div className="abitur-grid-bg min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="absolute top-4 left-4">
-          <BackToHomeLink />
-        </div>
-      
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
             Abiturprüfung Generieren

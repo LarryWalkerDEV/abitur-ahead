@@ -11,7 +11,6 @@ const AuthPage: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState("login");
-  const [pageLoaded, setPageLoaded] = React.useState(false);
 
   // Redirect to ExamPage if user is already authenticated
   useEffect(() => {
@@ -20,27 +19,21 @@ const AuthPage: React.FC = () => {
       isLoading: session.isLoading
     });
     
-    const checkAuth = () => {
-      // If session loading is complete
-      if (!session.isLoading) {
-        if (session.user) {
-          console.log("[AuthPage] User already authenticated, redirecting to exam page");
-          navigate("/exam");
-        } else {
-          console.log("[AuthPage] No user after auth check, staying on auth page");
-          setPageLoaded(true);
-        }
-      }
-    };
-    
-    // Check auth immediately
-    checkAuth();
-    
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
       console.log("[AuthPage] Loading timeout reached, forcing evaluation");
-      setPageLoaded(true);
-    }, 3000);
+      if (!session.user) {
+        console.log("[AuthPage] No user after timeout, staying on auth page");
+      }
+    }, 5000);
+    
+    if (!session.isLoading) {
+      clearTimeout(loadingTimeout);
+      if (session.user) {
+        console.log("[AuthPage] User already authenticated, redirecting to exam page");
+        navigate("/exam");
+      }
+    }
     
     return () => {
       clearTimeout(loadingTimeout);
@@ -53,9 +46,8 @@ const AuthPage: React.FC = () => {
     setActiveTab(value);
   };
 
-  // Show a loading state while we're checking authentication
-  if (session.isLoading && !pageLoaded) {
-    console.log("[AuthPage] Session is loading and page not forced loaded yet");
+  if (session.isLoading) {
+    console.log("[AuthPage] Session is loading");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -65,9 +57,6 @@ const AuthPage: React.FC = () => {
     );
   }
 
-  // If session is loaded and we have a user, we'll redirect in the useEffect
-  // If we're here, either we're still waiting for the redirect or we don't have a user
-  
   return (
     <div className="abitur-grid-bg min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">

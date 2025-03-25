@@ -97,56 +97,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log("[AuthContext] Setting up auth state listener");
     
-    const initSession = async () => {
-      try {
-        // First check for existing session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        console.log("[AuthContext] Initial session check:", 
-          currentSession ? "Session exists" : "No session");
-        
-        // Immediately update the session state based on the result
-        if (currentSession?.user) {
-          await refreshSession(
-            currentSession.user.id, 
-            currentSession.user.email
-          );
-        } else {
-          setSession({
-            user: null,
-            profile: null,
-            isLoading: false,
-          });
-        }
-      } catch (error) {
-        console.error("[AuthContext] Error checking initial session:", error);
-        setSession({
-          user: null,
-          profile: null,
-          isLoading: false,
-        });
-      }
+    const handleAuthChange = async (event: string, sessionData: any) => {
+      console.log("[AuthContext] Auth state changed:", event);
+      await refreshSession(
+        sessionData?.user?.id, 
+        sessionData?.user?.email
+      );
     };
     
-    // Initialize the session immediately
-    initSession();
-    
-    // Then set up auth state listener for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
-      console.log("[AuthContext] Auth state changed:", event);
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("[AuthContext] Initial session check:", 
+        currentSession ? "Session exists" : "No session");
       
-      if (sessionData?.user) {
-        await refreshSession(
-          sessionData.user.id, 
-          sessionData.user.email
-        );
-      } else {
-        setSession({
-          user: null,
-          profile: null,
-          isLoading: false,
-        });
-      }
+      refreshSession(
+        currentSession?.user?.id, 
+        currentSession?.user?.email
+      );
     });
 
     return () => {
