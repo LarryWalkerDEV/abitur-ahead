@@ -54,11 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq("id", user.id)
             .single();
           
-          // Here we need to cast the bundesland to the Bundesland type
+          // Here we need to cast both bundesland and subscription_status to their proper types
           if (profileData) {
             const profile: Profile = {
               ...profileData,
               bundesland: profileData.bundesland as Bundesland,
+              subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired',
             };
             
             setSession({
@@ -102,11 +103,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq("id", user.id)
         .single()
         .then(({ data: profileData }) => {
-          // Here we need to cast the bundesland to the Bundesland type
+          // Here we need to cast both bundesland and subscription_status to their proper types
           if (profileData) {
             const profile: Profile = {
               ...profileData,
               bundesland: profileData.bundesland as Bundesland,
+              subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired',
             };
             
             setSession({
@@ -254,10 +256,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (updatedProfileData) {
-        // Here we need to cast the bundesland to the Bundesland type
+        // Here we need to cast both bundesland and subscription_status to their proper types
         const updatedProfile: Profile = {
           ...updatedProfileData,
           bundesland: updatedProfileData.bundesland as Bundesland,
+          subscription_status: updatedProfileData.subscription_status as 'trial' | 'active' | 'expired',
         };
         
         setSession({
