@@ -22,12 +22,19 @@ const ExamGenerator = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
 
-  // Check if the auth session is loaded and update state
+  // Check if the auth session is loaded and update state - more reliable
   useEffect(() => {
+    const authState = {
+      isLoading: session.isLoading,
+      isAuthenticated: !!session.user,
+    };
+    
+    console.log('[ExamGenerator] Auth state updated:', authState);
+    
     if (!session.isLoading) {
       setIsAuthChecked(true);
     }
-  }, [session.isLoading]);
+  }, [session.isLoading, session.user]);
 
   const handleGenerateExam = async () => {
     try {
@@ -59,10 +66,24 @@ const ExamGenerator = () => {
           variant: 'destructive',
           duration: 5000,
         });
+        
+        // Navigate to auth page after a short delay
+        setTimeout(() => {
+          navigate('/auth');
+        }, 1500);
+        
         return;
       }
       
       setIsGenerating(true);
+      
+      // Refresh the auth token before making the request
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error('[ExamGenerator] Error refreshing session:', refreshError);
+        throw new Error('Fehler bei der Authentifizierung. Bitte melde dich erneut an.');
+      }
       
       // Get the auth token to pass to the edge function
       const { data: authData, error: authError } = await supabase.auth.getSession();
@@ -81,6 +102,12 @@ const ExamGenerator = () => {
           duration: 5000,
         });
         setIsGenerating(false);
+        
+        // Navigate to auth page after a short delay
+        setTimeout(() => {
+          navigate('/auth');
+        }, 1500);
+        
         return;
       }
       
@@ -156,7 +183,7 @@ const ExamGenerator = () => {
             <Select 
               value={subject} 
               onValueChange={setSubject} 
-              disabled={isGenerating}
+              disabled={isGenerating || session.isLoading}
             >
               <SelectTrigger id="subject" className="w-full">
                 <SelectValue placeholder="Wähle ein Fach" />
@@ -176,7 +203,7 @@ const ExamGenerator = () => {
             <Select 
               value={difficulty} 
               onValueChange={setDifficulty} 
-              disabled={isGenerating}
+              disabled={isGenerating || session.isLoading}
             >
               <SelectTrigger id="difficulty" className="w-full">
                 <SelectValue placeholder="Wähle einen Schwierigkeitsgrad" />
@@ -190,7 +217,7 @@ const ExamGenerator = () => {
           
           <Button 
             onClick={handleGenerateExam} 
-            disabled={isGenerating || session.isLoading}
+            disabled={isGenerating || session.isLoading || !session.user}
             className="px-8 h-10 bg-abitur-pink hover:bg-abitur-pink/90 text-white mt-2 md:mt-0"
           >
             {isGenerating ? (
@@ -199,7 +226,10 @@ const ExamGenerator = () => {
                 <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               </>
             ) : session.isLoading ? (
-              'Laden...'
+              <>
+                <span className="mr-2">Laden...</span>
+                <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              </>
             ) : 'Prüfung generieren'}
           </Button>
         </div>

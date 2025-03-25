@@ -14,58 +14,57 @@ const ExamPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hexCode = searchParams.get('hexCode');
-  const [pageLoaded, setPageLoaded] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
+  // Improved auth status check
   useEffect(() => {
     console.log("[ExamPage] Component mounted, checking authentication", {
       user: session.user ? true : false,
       isLoading: session.isLoading,
-      hexCode: hexCode
+      hexCode: hexCode,
+      isNavigating
     });
     
-    // Set a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      if (session.isLoading) {
-        console.log("[ExamPage] Loading timeout reached, forcing page to load");
-        setPageLoaded(true);
-      }
-    }, 5000);
+    // Skip if already navigating to prevent loops
+    if (isNavigating) {
+      return;
+    }
     
-    // Make sure we're setting loading state correctly
+    // When session loading is done, we can make auth decisions
     if (!session.isLoading) {
-      // Clear timeout as we've loaded
-      clearTimeout(loadingTimeout);
-      setPageLoaded(true);
+      setAuthCheckComplete(true);
+      
+      // If no user and auth check is done, redirect to auth page
+      if (!session.user) {
+        console.log("[ExamPage] User not authenticated, redirecting to auth page");
+        setIsNavigating(true);
+        
+        toast({
+          title: "Nicht angemeldet",
+          description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
+          variant: "destructive",
+          duration: 5000,
+        });
+        
+        // Small delay to ensure state updates and toast is visible
+        setTimeout(() => {
+          navigate("/auth");
+        }, 500);
+      } else {
+        console.log("[ExamPage] User is authenticated, staying on exam page");
+      }
     }
+  }, [session.isLoading, session.user, navigate, hexCode, isNavigating]);
 
-    return () => {
-      clearTimeout(loadingTimeout);
-      console.log("[ExamPage] Component unmounted");
-    };
-  }, [session.isLoading, hexCode]);
-
-  // Redirect to auth if not logged in (but only after loading completes)
-  useEffect(() => {
-    if (pageLoaded && !session.isLoading && !session.user) {
-      console.log("[ExamPage] User not authenticated, redirecting to auth page");
-      toast({
-        title: "Nicht angemeldet",
-        description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
-        variant: "destructive",
-        duration: 5000,
-      });
-      navigate("/auth");
-    }
-  }, [pageLoaded, session.isLoading, session.user, navigate]);
-
-  // Show loading state while checking authentication
-  if (session.isLoading && !pageLoaded) {
+  // Show a better loading state with animation
+  if (session.isLoading || (!authCheckComplete && !session.user)) {
     console.log("[ExamPage] Showing loading screen");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-abitur-pink border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg text-muted-foreground">Laden...</p>
+          <p className="text-lg text-muted-foreground">Authentifizierung wird überprüft...</p>
         </div>
       </div>
     );
@@ -88,7 +87,7 @@ const ExamPage: React.FC = () => {
         </div>
 
         {/* Authentication status indicator */}
-        {!session.user && !session.isLoading && (
+        {!session.user && (
           <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4 mb-6 text-center">
             <p className="text-white mb-3">Du musst angemeldet sein, um Prüfungen zu erstellen.</p>
             <Button

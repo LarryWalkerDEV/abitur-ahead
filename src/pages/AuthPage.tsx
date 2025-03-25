@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SignUpForm from "@/components/auth/SignUpForm";
 import LoginForm from "@/components/auth/LoginForm";
@@ -10,48 +10,54 @@ import BackToHomeLink from "@/components/layout/BackToHomeLink";
 const AuthPage: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = React.useState("login");
+  const [activeTab, setActiveTab] = useState("login");
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // Redirect to ExamPage if user is already authenticated
+  // Improved redirect handling with debounce
   useEffect(() => {
     console.log("[AuthPage] Component mounted, checking authentication state", {
       user: session.user ? true : false,
-      isLoading: session.isLoading
+      isLoading: session.isLoading,
+      isNavigating
     });
     
-    // Set a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      console.log("[AuthPage] Loading timeout reached, forcing evaluation");
-      if (!session.user) {
-        console.log("[AuthPage] No user after timeout, staying on auth page");
-      }
-    }, 5000);
-    
-    if (!session.isLoading) {
-      clearTimeout(loadingTimeout);
-      if (session.user) {
-        console.log("[AuthPage] User already authenticated, redirecting to exam page");
-        navigate("/exam");
-      }
+    // Only proceed if we're not currently navigating to avoid loops
+    if (isNavigating) {
+      return;
     }
     
-    return () => {
-      clearTimeout(loadingTimeout);
-      console.log("[AuthPage] Component unmounted");
-    };
-  }, [session.user, session.isLoading, navigate]);
+    // If user is authenticated and session loading is complete, redirect to exam page
+    if (!session.isLoading && session.user) {
+      console.log("[AuthPage] User authenticated, redirecting to exam page");
+      setIsNavigating(true);
+      
+      // Add a small delay to ensure all state updates are processed
+      const redirectTimer = setTimeout(() => {
+        navigate("/exam");
+      }, 100);
+      
+      return () => clearTimeout(redirectTimer);
+    }
+    
+    // If session has finished loading and no user is found, just stay on the auth page
+    if (!session.isLoading && !session.user) {
+      console.log("[AuthPage] Authentication check complete, no user found");
+    }
+  }, [session.user, session.isLoading, navigate, isNavigating]);
 
   const handleTabChange = (value: string) => {
     console.log(`[AuthPage] Tab changed to ${value}`);
     setActiveTab(value);
   };
 
+  // Show a loading state while checking authentication, but with a maximum duration
   if (session.isLoading) {
     console.log("[AuthPage] Session is loading");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-lg text-muted-foreground">Laden...</p>
+          <div className="w-12 h-12 border-4 border-abitur-pink border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-muted-foreground">Authentifizierung wird überprüft...</p>
         </div>
       </div>
     );

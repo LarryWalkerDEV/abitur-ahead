@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading: true,
   });
 
-  // Fetch user profile
+  // Fetch user profile with better error handling
   const fetchProfile = async (userId: string) => {
     try {
       console.log("[AuthContext] Fetching profile for user ID:", userId);
@@ -38,18 +38,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
 
+      if (!profileData) {
+        console.error("[AuthContext] No profile data found for user:", userId);
+        return null;
+      }
+
       console.log("[AuthContext] Profile data retrieved:", profileData);
       
-      // Validate bundesland as a proper Bundesland type
-      const bundesland = profileData.bundesland as Bundesland;
+      // Validate bundesland with fallback
+      let bundesland: Bundesland;
+      try {
+        bundesland = profileData.bundesland as Bundesland;
+        if (!bundesland) {
+          console.warn("[AuthContext] Bundesland not found, defaulting to Bayern");
+          bundesland = "Bayern";
+        }
+      } catch (e) {
+        console.error("[AuthContext] Error parsing bundesland:", e);
+        bundesland = "Bayern";
+      }
       
-      // Create properly typed profile
+      // Create properly typed profile with fallbacks for missing data
       const profile: Profile = {
         id: profileData.id,
-        name: profileData.name,
+        name: profileData.name || null,
         bundesland: bundesland,
-        subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired',
-        trial_end_date: profileData.trial_end_date
+        subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired' || 'trial',
+        trial_end_date: profileData.trial_end_date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
       };
 
       return profile;
@@ -59,12 +74,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Update session with user and profile
-  const refreshSession = async (userId: string | undefined, email: string | undefined) => {
-    console.log("[AuthContext] Refreshing session for:", { userId, email });
+  // Update session with user and profile - more robust implementation
+  const refreshSession = async (userId: string | undefined, email: string | undefined, forceReset = false) => {
+    console.log("[AuthContext] Refreshing session for:", { userId, email, forceReset });
     
-    if (!userId || !email) {
-      console.log("[AuthContext] No user ID or email, setting session to null");
+    // If forceReset is true or no userId/email, clear the session
+    if (forceReset || !userId || !email) {
+      console.log("[AuthContext] No user ID or email, or force reset requested. Setting session to null");
       setSession({
         user: null,
         profile: null,
@@ -73,61 +89,155 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const profile = await fetchProfile(userId);
-    console.log("[AuthContext] Profile fetched:", profile);
-    
-    setSession({
-      user: {
-        id: userId,
-        email,
-      },
-      profile,
-      isLoading: false,
-    });
-    
-    console.log("[AuthContext] Session updated:", { 
-      userId, 
-      email, 
-      profile: profile ? "exists" : "null",
-      isLoading: false 
-    });
+    try {
+      const profile = await fetchProfile(userId);
+      console.log("[AuthContext] Profile fetched:", profile);
+      
+      setSession({
+        user: {
+          id: userId,
+          email,
+        },
+        profile,
+        isLoading: false,
+      });
+      
+      console.log("[AuthContext] Session updated:", { 
+        userId, 
+        email, 
+        profile: profile ? "exists" : "null",
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error("[AuthContext] Error refreshing session:", error);
+      // On error, reset session to prevent stale state
+      setSession({
+        user: null,
+        profile: null,
+        isLoading: false,
+      });
+    }
   };
 
-  // Initialize session
+  // Initialize session with improved event handling
   useEffect(() => {
     console.log("[AuthContext] Setting up auth state listener");
+    let mounted = true;
     
+    // Handle auth changes with event-specific logic
     const handleAuthChange = async (event: string, sessionData: any) => {
       console.log("[AuthContext] Auth state changed:", event);
-      await refreshSession(
-        sessionData?.user?.id, 
-        sessionData?.user?.email
-      );
+      
+      if (!mounted) {
+        console.log("[AuthContext] Component unmounted, skipping state update");
+        return;
+      }
+      
+      // Handle different auth events
+      switch (event) {
+        case "SIGNED_IN":
+          console.log("[AuthContext] Handling SIGNED_IN event");
+          await refreshSession(
+            sessionData?.user?.id, 
+            sessionData?.user?.email
+          );
+          break;
+        
+        case "SIGNED_OUT":
+          console.log("[AuthContext] Handling SIGNED_OUT event");
+          // Force reset on sign out
+          await refreshSession(undefined, undefined, true);
+          break;
+          
+        case "TOKEN_REFRESHED":
+          console.log("[AuthContext] Handling TOKEN_REFRESHED event");
+          // Just refresh the session with current user data
+          await refreshSession(
+            sessionData?.user?.id, 
+            sessionData?.user?.email
+          );
+          break;
+          
+        case "USER_UPDATED":
+          console.log("[AuthContext] Handling USER_UPDATED event");
+          await refreshSession(
+            sessionData?.user?.id, 
+            sessionData?.user?.email
+          );
+          break;
+          
+        default:
+          console.log("[AuthContext] Unhandled auth event:", event);
+          // For unhandled events, check if we have a session and refresh accordingly
+          if (sessionData?.user?.id) {
+            await refreshSession(
+              sessionData.user.id, 
+              sessionData.user.email
+            );
+          } else {
+            // If no user in the session data, reset
+            await refreshSession(undefined, undefined, true);
+          }
+      }
     };
     
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("[AuthContext] Initial session check:", 
-        currentSession ? "Session exists" : "No session");
-      
-      refreshSession(
-        currentSession?.user?.id, 
-        currentSession?.user?.email
-      );
-    });
+    const initializeSession = async () => {
+      try {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[AuthContext] Error getting session:", error);
+          if (mounted) {
+            setSession({
+              user: null,
+              profile: null,
+              isLoading: false,
+            });
+          }
+          return;
+        }
+        
+        console.log("[AuthContext] Initial session check:", 
+          currentSession ? "Session exists" : "No session");
+        
+        if (mounted) {
+          await refreshSession(
+            currentSession?.user?.id, 
+            currentSession?.user?.email
+          );
+        }
+      } catch (error) {
+        console.error("[AuthContext] Exception during initialization:", error);
+        if (mounted) {
+          setSession({
+            user: null,
+            profile: null,
+            isLoading: false,
+          });
+        }
+      }
+    };
+    
+    initializeSession();
 
+    // Cleanup function
     return () => {
+      console.log("[AuthContext] Cleaning up auth state listener");
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  // Sign up
+  // Sign up with improved error handling
   const signUp = async (email: string, password: string, name: string, bundesland: Bundesland) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("[AuthContext] Attempting to sign up user:", email);
+      
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -148,12 +258,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      toast({
-        title: "Registrierung erfolgreich",
-        description: "Bitte überprüfe deine E-Mail für weitere Anweisungen.",
-      });
-      
-      navigate("/");
+      console.log("[AuthContext] Sign up successful:", data);
+
+      // Only navigate and show success toast if we actually have a session
+      if (data.user) {
+        toast({
+          title: "Registrierung erfolgreich",
+          description: "Bitte überprüfe deine E-Mail für weitere Anweisungen.",
+        });
+        
+        // Add slight delay to ensure state updates before navigation
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
+      } else {
+        console.warn("[AuthContext] Sign up completed but no user returned");
+        toast({
+          title: "Registrierung abgeschlossen",
+          description: "Bitte überprüfe deine E-Mail und bestätige deine Anmeldung.",
+        });
+      }
     } catch (error) {
       console.error("[AuthContext] Sign up exception:", error);
       toast({
@@ -164,10 +288,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign in
+  // Sign in with improved error handling and state management
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("[AuthContext] Attempting to sign in user:", email);
+      
+      // First sign out to ensure clean state
+      await supabase.auth.signOut();
+      
+      // Brief pause to ensure clean slate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -182,13 +314,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      console.log("[AuthContext] Sign in successful:", data);
+
       toast({
         title: "Anmeldung erfolgreich",
         description: "Willkommen zurück!",
       });
       
-      // Redirect to exam page after successful login
-      navigate("/exam");
+      // Add slight delay to ensure state updates before navigation
+      setTimeout(() => {
+        navigate("/exam");
+      }, 500);
     } catch (error) {
       console.error("[AuthContext] Sign in exception:", error);
       toast({
@@ -199,9 +335,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign out
+  // Sign out with improved cleanup
   const signOut = async () => {
     try {
+      console.log("[AuthContext] Signing out user");
+      
+      // Clear session state first to prevent flashes of authenticated content
+      setSession({
+        user: null,
+        profile: null,
+        isLoading: true,
+      });
+      
       const { error } = await supabase.auth.signOut();
 
       if (error) {
@@ -214,12 +359,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      // Force clear local storage to ensure no stale tokens remain
+      try {
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
+      } catch (e) {
+        console.warn("[AuthContext] Error clearing storage:", e);
+      }
+
+      console.log("[AuthContext] Sign out successful");
+      
       toast({
         title: "Abmeldung erfolgreich",
         description: "Auf Wiedersehen!",
       });
       
-      navigate("/auth");
+      // Delay navigation slightly to ensure state updates
+      setTimeout(() => {
+        navigate("/auth");
+      }, 100);
     } catch (error) {
       console.error("[AuthContext] Sign out exception:", error);
       toast({
@@ -230,7 +388,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Update profile
+  // Update profile with improved error handling
   const updateProfile = async (data: Partial<Profile>) => {
     try {
       if (!session.user) {
