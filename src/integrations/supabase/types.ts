@@ -9,6 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      exam_prompts: {
+        Row: {
+          created_at: string | null
+          id: string
+          subject: string
+          system_prompt: string
+          updated_at: string | null
+          user_prompt: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          subject: string
+          system_prompt: string
+          updated_at?: string | null
+          user_prompt: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          subject?: string
+          system_prompt?: string
+          updated_at?: string | null
+          user_prompt?: string
+        }
+        Relationships: []
+      }
+      exams: {
+        Row: {
+          bundesland: string
+          content: string | null
+          created_at: string | null
+          difficulty: string
+          error_message: string | null
+          hexcode: string
+          id: string
+          status: string
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bundesland: string
+          content?: string | null
+          created_at?: string | null
+          difficulty: string
+          error_message?: string | null
+          hexcode: string
+          id?: string
+          status?: string
+          subject: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bundesland?: string
+          content?: string | null
+          created_at?: string | null
+          difficulty?: string
+          error_message?: string | null
+          hexcode?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bundesland: string

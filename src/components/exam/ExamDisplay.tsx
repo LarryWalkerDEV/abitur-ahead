@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 interface ExamDisplayProps {
   hexCode: string;
@@ -12,51 +14,63 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
   const [exam, setExam] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { session } = useAuth();
 
   useEffect(() => {
-    if (!hexCode) {
+    if (!hexCode || !session.user) {
       setLoading(false);
+      setError('Keine gültige Prüfungs-ID gefunden oder nicht eingeloggt.');
       return;
     }
 
     console.log('[ExamDisplay] Fetching exam with hexCode:', hexCode);
     
-    // Simulate fetching exam data
     const fetchExam = async () => {
       try {
-        // Simulating API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const { data, error } = await supabase
+          .from('exams')
+          .select('*')
+          .eq('hexcode', hexCode)
+          .single();
         
-        // Mock exam data for demonstration
-        const mockExam = {
-          id: hexCode,
-          subject: 'Mathematik',
-          difficulty: 'Grundkurs',
-          status: 'completed',
-          content: `
-            <h1>Mathematik Grundkurs</h1>
-            <h2>Abiturprüfung</h2>
-            <p>Diese Prüfung besteht aus mehreren Teilen. Bitte bearbeiten Sie alle Aufgaben.</p>
-            <hr />
-            <h3>Aufgabe 1: Funktionen</h3>
-            <p>Gegeben ist die Funktion f(x) = 2x² - 3x + 1</p>
-            <ol>
-              <li>Bestimmen Sie die Nullstellen der Funktion.</li>
-              <li>Berechnen Sie die erste Ableitung f'(x) und bestimmen Sie deren Nullstellen.</li>
-              <li>Skizzieren Sie den Graphen der Funktion f.</li>
-            </ol>
-            <h3>Aufgabe 2: Wahrscheinlichkeitsrechnung</h3>
-            <p>In einer Urne befinden sich 5 rote, 3 blaue und 2 grüne Kugeln.</p>
-            <ol>
-              <li>Mit welcher Wahrscheinlichkeit wird eine rote Kugel gezogen?</li>
-              <li>Es werden nacheinander zwei Kugeln ohne Zurücklegen gezogen. Mit welcher Wahrscheinlichkeit sind beide Kugeln rot?</li>
-            </ol>
-          `,
-          created_at: new Date().toISOString(),
-        };
+        if (error) {
+          throw error;
+        }
         
-        console.log('[ExamDisplay] Exam data received:', mockExam);
-        setExam(mockExam);
+        if (!data) {
+          throw new Error('Prüfung konnte nicht gefunden werden');
+        }
+        
+        console.log('[ExamDisplay] Exam data received:', data);
+        setExam(data);
+        
+        // If the exam is still generating, set up polling
+        if (data.status === 'generating') {
+          const pollingInterval = setInterval(async () => {
+            console.log('[ExamDisplay] Polling for exam status updates...');
+            
+            const { data: updatedExam, error: pollingError } = await supabase
+              .from('exams')
+              .select('*')
+              .eq('hexcode', hexCode)
+              .single();
+              
+            if (pollingError) {
+              console.error('[ExamDisplay] Polling error:', pollingError);
+              clearInterval(pollingInterval);
+              return;
+            }
+            
+            if (updatedExam && updatedExam.status !== 'generating') {
+              console.log('[ExamDisplay] Exam generation completed:', updatedExam.status);
+              setExam(updatedExam);
+              clearInterval(pollingInterval);
+            }
+          }, 10000); // Poll every 10 seconds
+          
+          // Clean up interval on component unmount
+          return () => clearInterval(pollingInterval);
+        }
       } catch (err) {
         console.error('[ExamDisplay] Error in try/catch:', err);
         setError('Prüfung konnte nicht geladen werden');
@@ -67,7 +81,7 @@ const ExamDisplay = ({ hexCode }: ExamDisplayProps) => {
 
     fetchExam();
     
-  }, [hexCode]);
+  }, [hexCode, session.user]);
 
   if (loading) {
     return (

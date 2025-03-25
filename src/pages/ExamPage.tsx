@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import ExamGenerator from "@/components/exam/ExamGenerator";
 import ExamDisplay from "@/components/exam/ExamDisplay";
+import ExamHistory from "@/components/exam/ExamHistory";
 import BackToHomeLink from "@/components/layout/BackToHomeLink";
 
 const ExamPage: React.FC = () => {
@@ -89,13 +90,9 @@ const ExamPage: React.FC = () => {
           <ExamDisplay hexCode={hexCode} />
         )}
         
-        {/* Show exam history or a message if no hexCode */}
+        {/* Show exam history if no hexCode */}
         {!hexCode && (
-          <div className="glassmorphism p-6 rounded-lg text-center py-8 text-muted-foreground">
-            <h2 className="text-xl font-semibold mb-4">Frühere Prüfungen</h2>
-            <p>Wähle ein Fach und einen Schwierigkeitsgrad, um eine neue Prüfung zu generieren.</p>
-            <p className="mt-4">Deine generierten Prüfungen werden hier angezeigt.</p>
-          </div>
+          <ExamHistory />
         )}
       </div>
     </div>

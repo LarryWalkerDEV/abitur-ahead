@@ -12,24 +12,43 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const ExamGenerator = () => {
   const [subject, setSubject] = useState('Mathematik');
   const [difficulty, setDifficulty] = useState('Grundkurs');
   const [isGenerating, setIsGenerating] = useState(false);
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   const handleGenerateExam = async () => {
     try {
+      if (!session.user) {
+        toast({
+          title: 'Fehler',
+          description: 'Du musst angemeldet sein, um eine Prüfung zu generieren.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       console.log('[ExamGenerator] Starting exam generation, subject:', subject, 'difficulty:', difficulty);
       setIsGenerating(true);
       
-      // Simulating an API call since we don't have an edge function yet
-      // This would be replaced with an actual call to a Supabase edge function
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data, error } = await supabase.functions.invoke('math-exam', {
+        body: { subject, difficulty },
+      });
       
-      const hexCode = Math.random().toString(16).substring(2, 10);
-      console.log('[ExamGenerator] Exam generation simulated, hexCode:', hexCode);
+      if (error) {
+        console.error('[ExamGenerator] Error invoking math-exam function:', error);
+        throw error;
+      }
+      
+      console.log('[ExamGenerator] Exam generation response:', data);
+      
+      if (!data.hexCode) {
+        throw new Error('Die Prüfungsgenerierung war erfolglos.');
+      }
       
       toast({
         title: 'Prüfung wird generiert',
@@ -37,7 +56,7 @@ const ExamGenerator = () => {
       });
       
       // Navigate to the exam display page with the hexcode
-      navigate(`/exam?hexCode=${hexCode}`);
+      navigate(`/exam?hexCode=${data.hexCode}`);
       
     } catch (error) {
       console.error('[ExamGenerator] Error generating exam:', error);
@@ -99,7 +118,7 @@ const ExamGenerator = () => {
           
           <Button 
             onClick={handleGenerateExam} 
-            disabled={isGenerating}
+            disabled={isGenerating || !session.user}
             className="px-8 h-10 bg-abitur-pink hover:bg-abitur-pink/90 text-white mt-2 md:mt-0"
           >
             {isGenerating ? 'Generieren...' : 'Prüfung generieren'}
