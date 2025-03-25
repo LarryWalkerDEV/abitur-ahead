@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
@@ -16,6 +16,7 @@ import RefundPolicyPage from "./pages/RefundPolicyPage";
 import ImprintPage from "./pages/ImprintPage";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Create a new query client for React Query
 const queryClient = new QueryClient({
@@ -52,9 +53,21 @@ const App = () => {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/auth" element={<AuthPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/exam" element={<ExamPage />} />
-              <Route path="/tutoring" element={<TutoringPage />} />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/exam" element={
+                <ProtectedRoute>
+                  <ExamPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/tutoring" element={
+                <ProtectedRoute>
+                  <TutoringPage />
+                </ProtectedRoute>
+              } />
               <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
               <Route path="/agb" element={<TermsPage />} />
               <Route path="/rueckerstattung" element={<RefundPolicyPage />} />
