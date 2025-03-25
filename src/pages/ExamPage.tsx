@@ -14,39 +14,22 @@ const ExamPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hexCode = searchParams.get('hexCode');
-  const [authChecked, setAuthChecked] = useState(false);
 
-  console.log("[ExamPage] Rendering with session state:", {
-    isLoading: session.isLoading,
-    isAuthenticated: Boolean(session.user),
-    hasHexCode: Boolean(hexCode),
-    authChecked
-  });
-
-  // Simplified authentication check with a flag to prevent repeated checks
+  // Simple check for authentication once on component mount
   useEffect(() => {
-    if (!authChecked && !session.isLoading) {
-      console.log("[ExamPage] Performing auth check");
-      
-      if (!session.user) {
-        console.log("[ExamPage] User not authenticated, redirecting to auth page");
-        
-        toast({
-          title: "Nicht angemeldet",
-          description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
-          variant: "destructive",
-          duration: 5000,
-        });
-        
-        navigate("/auth");
-      }
-      
-      setAuthChecked(true);
+    if (!session.isLoading && !session.user) {
+      console.log("[ExamPage] User not authenticated, redirecting");
+      toast({
+        title: "Nicht angemeldet",
+        description: "Bitte melden Sie sich an, um auf die Prüfungen zuzugreifen.",
+        variant: "destructive",
+      });
+      navigate("/auth");
     }
-  }, [session.isLoading, session.user, navigate, authChecked]);
+  }, [session.isLoading, session.user, navigate]);
 
-  // Show loading state only during initial check
-  if (session.isLoading && !authChecked) {
+  // Show loading state during authentication check
+  if (session.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -57,6 +40,12 @@ const ExamPage: React.FC = () => {
     );
   }
 
+  // If we're not loading and there's no user, don't render anything (redirect handled in useEffect)
+  if (!session.user) {
+    return null;
+  }
+
+  // User is authenticated, show the exam page
   return (
     <div className="abitur-grid-bg min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -73,31 +62,14 @@ const ExamPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Authentication status indicator for non-authenticated users */}
-        {!session.user && (
-          <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4 mb-6 text-center">
-            <p className="text-white mb-3">Du musst angemeldet sein, um Prüfungen zu erstellen.</p>
-            <Button
-              onClick={() => navigate('/auth')}
-              className="bg-abitur-pink hover:bg-abitur-pink/90"
-            >
-              Zur Anmeldung
-            </Button>
-          </div>
-        )}
-
         {/* Show exam generator only for authenticated users */}
-        {session.user && !hexCode && <ExamGenerator />}
+        {!hexCode && <ExamGenerator />}
         
         {/* Show exam display if hexCode is provided */}
-        {hexCode && (
-          <ExamDisplay hexCode={hexCode} />
-        )}
+        {hexCode && <ExamDisplay hexCode={hexCode} />}
         
         {/* Show exam history for authenticated users when no hexCode */}
-        {session.user && !hexCode && (
-          <ExamHistory />
-        )}
+        {!hexCode && <ExamHistory />}
       </div>
     </div>
   );
