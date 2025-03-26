@@ -11,35 +11,26 @@ const AuthPage: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("login");
-  const [redirectChecked, setRedirectChecked] = useState(false);
 
   console.log("[AuthPage] Rendering with session state:", {
     isLoading: session.isLoading,
-    isAuthenticated: Boolean(session.user),
-    redirectChecked
+    isAuthenticated: Boolean(session.user)
   });
 
-  // Simple redirect logic with a flag to prevent repeated checks
+  // Redirect to exam page if user is already authenticated
   useEffect(() => {
-    // Only check for redirect if not already checked and session loading is complete
-    if (!redirectChecked && !session.isLoading) {
-      console.log("[AuthPage] Checking if redirect is needed");
-      
-      if (session.user) {
-        console.log("[AuthPage] User is authenticated, redirecting to exam page");
-        navigate("/exam");
-      }
-      
-      setRedirectChecked(true);
+    if (!session.isLoading && session.user) {
+      console.log("[AuthPage] User is authenticated, redirecting to exam page");
+      navigate("/exam");
     }
-  }, [session.isLoading, session.user, navigate, redirectChecked]);
+  }, [session.isLoading, session.user, navigate]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
 
   // Show loading state only during initial load
-  if (session.isLoading && !redirectChecked) {
+  if (session.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -50,7 +41,7 @@ const AuthPage: React.FC = () => {
     );
   }
 
-  // Always render the auth forms once loading is complete, no matter what
+  // Show the auth forms if user is not authenticated
   return (
     <div className="abitur-grid-bg min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">

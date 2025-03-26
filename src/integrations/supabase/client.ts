@@ -19,9 +19,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 export const validateSession = async () => {
   try {
     const { data, error } = await supabase.auth.getSession();
+    console.log("[validateSession] Session check result:", !!data.session);
     return !error && !!data.session;
   } catch (e) {
-    console.error("Session validation error:", e);
+    console.error("[validateSession] Session validation error:", e);
     return false;
   }
 };
