@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -26,7 +25,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log("[AuthContext] Initializing auth");
     
-    // 1. Set up auth listener first
+    // Check for existing session
+    const checkSession = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        if (existingSession) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", existingSession.user.id)
+            .single();
+          
+          // Here we need to cast both bundesland and subscription_status to their proper types
+          if (profileData) {
+            const profile: Profile = {
+              ...profileData,
+              bundesland: profileData.bundesland as Bundesland,
+              subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired',
+            };
+            
+            setSession({
+              user: {
+                id: existingSession.user.id,
+                email: existingSession.user.email || ""
+              },
+              profile,
+              isLoading: false
+            });
+          } else {
+            setSession({
+              user: {
+                id: existingSession.user.id,
+                email: existingSession.user.email || ""
+              },
+              profile: null,
+              isLoading: false
+            });
+          }
+        } else {
+          setSession(prev => ({ ...prev, isLoading: false }));
+        }
+      } catch (error) {
+        console.error("[AuthContext] Error checking session:", error);
+        setSession(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+    
+    checkSession();
+    
+    // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("[AuthContext] Auth state changed:", event);
@@ -40,18 +87,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
-        if (newSession) {
-          // Simple user object
-          const user = {
-            id: newSession.user.id,
-            email: newSession.user.email || "",
-          };
-          
-          // Basic profile fetch
+        try {
           const { data: profileData } = await supabase
             .from("profiles")
             .select("*")
-            .eq("id", user.id)
+            .eq("id", newSession.user.id)
             .single();
           
           // Here we need to cast both bundesland and subscription_status to their proper types
@@ -63,73 +103,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
             
             setSession({
-              user,
+              user: {
+                id: newSession.user.id,
+                email: newSession.user.email || ""
+              },
               profile,
               isLoading: false
             });
           } else {
             setSession({
-              user,
+              user: {
+                id: newSession.user.id,
+                email: newSession.user.email || ""
+              },
               profile: null,
               isLoading: false
             });
           }
+        } catch (error) {
+          console.error("[AuthContext] Error handling auth state change:", error);
         }
       }
     );
     
-    // 2. Check initial session
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error || !data.session) {
-        console.log("[AuthContext] No initial session found");
-        setSession({
-          user: null,
-          profile: null,
-          isLoading: false
-        });
-        return;
-      }
-      
-      console.log("[AuthContext] Initial session found");
-      const user = {
-        id: data.session.user.id,
-        email: data.session.user.email || "",
-      };
-      
-      // Fetch profile data
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-        .then(({ data: profileData }) => {
-          // Here we need to cast both bundesland and subscription_status to their proper types
-          if (profileData) {
-            const profile: Profile = {
-              ...profileData,
-              bundesland: profileData.bundesland as Bundesland,
-              subscription_status: profileData.subscription_status as 'trial' | 'active' | 'expired',
-            };
-            
-            setSession({
-              user,
-              profile,
-              isLoading: false
-            });
-          } else {
-            setSession({
-              user,
-              profile: null,
-              isLoading: false
-            });
-          }
-        });
-    });
-    
-    // Cleanup
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   // Simple sign up function
